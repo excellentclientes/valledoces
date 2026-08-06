@@ -1,3 +1,177 @@
-..
-...
-.
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vallê Doces | Sistema de Gestão</title>
+<meta name="theme-color" content="#F5821F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%81%3C/text%3E%3C/svg%3E">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="css/style.css">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="config/firebase-config.js"></script>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="app-loading"><div class="spinner"></div></div>
+
+<!-- Login -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo-text brand-font" style="font-size:2.4rem;">Vallê</div>
+    <h1 class="brand-font" style="font-size:1rem; letter-spacing:3px; color:var(--brown-700); margin-top:-8px;">DOCES</h1>
+    <p class="tagline">Doce momento, felicidade em camadas.</p>
+    <h2>Entrar no painel</h2>
+    <p class="sub">Acesse com sua conta de administrador.</p>
+    <div class="login-error" id="login-error"></div>
+    <form class="login-form" id="login-form">
+      <div class="form-group" style="margin-bottom:0;">
+        <label>E-mail</label>
+        <input type="email" id="login-email" required placeholder="voce@valledoces.com">
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label>Senha</label>
+        <input type="password" id="login-password" required placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-submit">
+        <i class="fa-solid fa-right-to-bracket"></i> Entrar
+      </button>
+    </form>
+    <p class="login-foot">Primeiro acesso? Peça ao administrador para criar seu usuário no Firebase Authentication.</p>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app-shell" style="display:none;">
+  <div id="sidebar-backdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo-text brand-font">Vallê</div>
+      <div class="logo-sub brand-font">DOCES</div>
+      <div class="logo-tag">Doce momento, felicidade em camadas 💛</div>
+    </div>
+    <nav class="nav-links" id="nav-links">
+      <div class="nav-item active" data-view="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+      <div class="nav-item" data-view="pedidos"><i class="fa-solid fa-bag-shopping"></i> Pedidos</div>
+      <div class="nav-item" data-view="clientes"><i class="fa-solid fa-users"></i> Clientes</div>
+      <div class="nav-item" data-view="produtos"><i class="fa-solid fa-cookie-bite"></i> Produtos</div>
+      <div class="nav-item" data-view="cardapio"><i class="fa-solid fa-book-open"></i> Cardápio</div>
+      <div class="nav-item" data-view="producao"><i class="fa-solid fa-kitchen-set"></i> Produção</div>
+      <div class="nav-item" data-view="estoque"><i class="fa-solid fa-warehouse"></i> Estoque</div>
+      <div class="nav-item" data-view="financeiro"><i class="fa-solid fa-sack-dollar"></i> Financeiro</div>
+      <div class="nav-item" data-view="precificacao"><i class="fa-solid fa-tags"></i> Precificação</div>
+      <div class="nav-item" data-view="relatorios"><i class="fa-solid fa-chart-column"></i> Relatórios</div>
+      <div class="nav-item" data-view="configuracoes"><i class="fa-solid fa-gear"></i> Configurações</div>
+    </nav>
+    <div class="sidebar-user">
+      <div class="avatar" id="user-avatar">A</div>
+      <div class="who">
+        <strong id="user-name">Andressa Valério</strong>
+        <span>Administrador</span>
+      </div>
+      <button class="btn-logout" id="btn-logout" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="mobile-toggle" id="mobile-toggle"><i class="fa-solid fa-bars"></i></button>
+        <div>
+          <h1 id="topbar-title">Olá, Andressa! 👋</h1>
+          <div class="greet-sub" id="topbar-sub">Bem-vinda ao painel de gestão do seu negócio.</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="date-pill"><i class="fa-regular fa-calendar"></i> <span id="topbar-date">--</span></div>
+        <button class="bell-btn" id="bell-btn"><i class="fa-regular fa-bell"></i><span class="dot" id="bell-dot" style="display:none;"></span></button>
+      </div>
+    </header>
+
+    <div class="view" id="view">
+
+      <!-- DASHBOARD -->
+      <section class="view-section active" id="view-dashboard"></section>
+
+      <!-- PEDIDOS -->
+      <section class="view-section" id="view-pedidos"></section>
+
+      <!-- CLIENTES -->
+      <section class="view-section" id="view-clientes"></section>
+
+      <!-- PRODUTOS -->
+      <section class="view-section" id="view-produtos"></section>
+
+      <!-- CARDAPIO -->
+      <section class="view-section" id="view-cardapio"></section>
+
+      <!-- PRODUCAO -->
+      <section class="view-section" id="view-producao"></section>
+
+      <!-- ESTOQUE -->
+      <section class="view-section" id="view-estoque"></section>
+
+      <!-- FINANCEIRO -->
+      <section class="view-section" id="view-financeiro"></section>
+
+      <!-- PRECIFICACAO -->
+      <section class="view-section" id="view-precificacao"></section>
+
+      <!-- RELATORIOS -->
+      <section class="view-section" id="view-relatorios"></section>
+
+      <!-- CONFIGURACOES -->
+      <section class="view-section" id="view-configuracoes"></section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Generic modal host -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal-box"></div>
+</div>
+
+<!-- Confirm dialog -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal" style="max-width:380px; text-align:center;">
+    <div style="width:52px;height:52px;border-radius:50%;background:var(--danger-bg);color:var(--danger);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <h3 id="confirm-title" style="margin-bottom:8px;">Confirmar ação</h3>
+    <p id="confirm-msg" style="color:var(--text-muted); font-size:0.88rem; margin-bottom:20px;">Tem certeza?</p>
+    <div class="form-actions">
+      <button class="btn btn-outline" id="confirm-cancel">Cancelar</button>
+      <button class="btn btn-danger" id="confirm-ok">Sim, excluir</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/clientes.js"></script>
+<script src="js/produtos.js"></script>
+<script src="js/cardapio.js"></script>
+<script src="js/pedidos.js"></script>
+<script src="js/producao.js"></script>
+<script src="js/estoque.js"></script>
+<script src="js/financeiro.js"></script>
+<script src="js/precificacao.js"></script>
+<script src="js/relatorios.js"></script>
+<script src="js/configuracoes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

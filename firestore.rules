@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Regras de segurança — Vallê Doces
+// Sistema interno de gestão: todo o acesso a dados exige autenticação.
+// Publique com: firebase deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    match /{document=**} {
+      allow read, write: if signedIn();
+    }
+  }
+}
