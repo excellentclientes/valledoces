@@ -34,15 +34,20 @@ storage.rules               regras de segurança do Storage (fotos de produtos)
 
 ## Primeiro acesso — passo a passo no Firebase Console
 
-O projeto `valledoces` já está conectado no código. Falta apenas habilitar o login e
-criar seu usuário administrador:
+O projeto `valledoces` já está conectado no código. O login da tela inicial é feito por
+**e-mail e senha (com cadastro direto pelo próprio sistema)** ou por **login com Google** —
+não é preciso criar o usuário manualmente no console. Falta apenas habilitar os dois
+provedores:
 
 1. Acesse o [Firebase Console](https://console.firebase.google.com/) → projeto **valledoces**.
 2. **Authentication → Sign-in method** → habilite o provedor **E-mail/senha**.
-3. **Authentication → Users → Add user** → cadastre seu e-mail e uma senha (esse será o
-   login usado na tela inicial do sistema).
-4. **Firestore Database** → crie o banco (modo produção) caso ainda não exista.
-5. Publique as regras de segurança inclusas neste repositório para restringir o acesso
+3. Nessa mesma tela, habilite também o provedor **Google** (defina um e-mail de suporte
+   quando pedido).
+4. **Authentication → Settings → Authorized domains** → confira se o domínio onde o
+   sistema vai rodar (ex.: `valledoces.web.app`, ou o domínio do GitHub Pages/Hosting)
+   está na lista — senão o login com Google não funciona.
+5. **Firestore Database** → crie o banco (modo produção) caso ainda não exista.
+6. Publique as regras de segurança inclusas neste repositório para restringir o acesso
    aos dados apenas a usuários autenticados:
    ```bash
    npm install -g firebase-tools
@@ -52,13 +57,20 @@ criar seu usuário administrador:
    ```
    (ou cole o conteúdo de `firestore.rules` e `storage.rules` diretamente no console,
    em Firestore → Regras / Storage → Regras).
-6. Abra `index.html` (ou publique via Firebase Hosting / GitHub Pages) e entre com o
-   e-mail e senha cadastrados no passo 3.
+7. Abra `index.html` (ou publique via Firebase Hosting / GitHub Pages) e crie sua conta
+   direto na tela de login ("Criar conta") ou entre com o Google.
 
 > As chaves em `config/firebase-config.js` são as credenciais **públicas** do app Web —
 > é normal e esperado que fiquem visíveis no navegador. A segurança de verdade vem das
-> regras do Firestore/Storage (passo 5) e do login: sem estar autenticado, ninguém lê ou
+> regras do Firestore/Storage (passo 6) e do login: sem estar autenticado, ninguém lê ou
 > grava dados.
+>
+> ⚠️ Como o cadastro por e-mail é aberto (qualquer pessoa pode criar uma conta na tela de
+> login), e as regras atuais liberam leitura/escrita para **qualquer usuário autenticado**,
+> qualquer um que se cadastre passa a ter acesso completo aos dados da loja. Para um
+> negócio com dados sensíveis, avalie restringir depois — por exemplo, limitando o login
+> a uma lista de e-mails autorizados nas regras do Firestore, ou desativando o cadastro
+> por e-mail e mantendo só o Google com domínio restrito.
 
 ## Publicar (Firebase Hosting)
 
