@@ -1,1 +1,227 @@
+/* ==========================================================================
+   Núcleo do app — Vallê Doces
+   Store central (dados em tempo real do Firestore) + navegação + boot.
+   ========================================================================== */
 
+const Store = {
+    clientes: [], produtos: [], pedidos: [], estoque: [], financeiro: [], producao: [], receitas: [],
+    config: {
+        nomeLoja: 'Vallê Doces',
+        nomeAdmin: 'Andressa',
+        categoriasProdutos: ['Bombons', 'Trufas', 'Tortas', 'Doces de Colher', 'Brigadeiros', 'Cento de Docinhos'],
+        formasPagamento: ['Pix', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito'],
+        taxaEntregaPadrao: 0
+    },
+    listeners: {},
+    on(name, cb) { (this.listeners[name] = this.listeners[name] || []).push(cb); },
+    emit(name) {
+        (this.listeners[name] || []).forEach(cb => { try { cb(); } catch (e) { console.error(e); } });
+        (this.listeners['*'] || []).forEach(cb => { try { cb(); } catch (e) { console.error(e); } });
+    }
+};
+
+let _unsubscribers = [];
+
+function initStoreListeners() {
+    const db = window.db;
+
+    _unsubscribers.push(db.collection('clientes').orderBy('nome').onSnapshot(snap => {
+        Store.clientes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('clientes');
+    }, err => console.error('clientes', err)));
+
+    _unsubscribers.push(db.collection('produtos').orderBy('nome').onSnapshot(snap => {
+        Store.produtos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('produtos');
+    }, err => console.error('produtos', err)));
+
+    _unsubscribers.push(db.collection('pedidos').orderBy('createdAt', 'desc').onSnapshot(snap => {
+        Store.pedidos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('pedidos');
+    }, err => console.error('pedidos', err)));
+
+    _unsubscribers.push(db.collection('estoque').orderBy('nome').onSnapshot(snap => {
+        Store.estoque = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('estoque');
+    }, err => console.error('estoque', err)));
+
+    _unsubscribers.push(db.collection('financeiro').orderBy('data', 'desc').onSnapshot(snap => {
+        Store.financeiro = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('financeiro');
+    }, err => console.error('financeiro', err)));
+
+    _unsubscribers.push(db.collection('producao').orderBy('data', 'desc').onSnapshot(snap => {
+        Store.producao = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('producao');
+    }, err => console.error('producao', err)));
+
+    _unsubscribers.push(db.collection('receitas').onSnapshot(snap => {
+        Store.receitas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('receitas');
+    }, err => console.error('receitas', err)));
+
+    _unsubscribers.push(db.collection('configuracoes').doc('geral').onSnapshot(snap => {
+        if (snap.exists) {
+            Store.config = { ...Store.config, ...snap.data() };
+        } else {
+            db.collection('configuracoes').doc('geral').set(Store.config, { merge: true }).catch(() => {});
+        }
+        Store.emit('config');
+    }, err => console.error('config', err)));
+}
+
+function teardownStoreListeners() {
+    _unsubscribers.forEach(u => { try { u(); } catch (e) {} });
+    _unsubscribers = [];
+    Store.clientes = []; Store.produtos = []; Store.pedidos = []; Store.estoque = [];
+    Store.financeiro = []; Store.producao = []; Store.receitas = [];
+}
+
+/* Gera próximo número sequencial de pedido de forma atômica */
+async function nextPedidoNumero() {
+    const ref = window.db.collection('configuracoes').doc('contadores');
+    return window.db.runTransaction(async (t) => {
+        const doc = await t.get(ref);
+        const atual = (doc.exists && doc.data().pedidos) ? doc.data().pedidos : 1000;
+        const proximo = atual + 1;
+        t.set(ref, { pedidos: proximo }, { merge: true });
+        return proximo;
+    });
+}
+window.nextPedidoNumero = nextPedidoNumero;
+
+/* ---------------------------------------------------------------------- */
+/* Navegação                                                               */
+/* ---------------------------------------------------------------------- */
+const VIEWS = ['dashboard', 'pedidos', 'clientes', 'produtos', 'cardapio', 'producao', 'estoque', 'financeiro', 'precificacao', 'relatorios', 'configuracoes'];
+
+const TITLES = {
+    dashboard: ['Olá, {nome}! 👋', 'Bem-vinda ao painel de gestão do seu negócio.'],
+    pedidos: ['Pedidos', 'Acompanhe e gerencie todos os pedidos da loja.'],
+    clientes: ['Clientes', 'Sua base de clientes e histórico de compras.'],
+    produtos: ['Produtos', 'Catálogo de doces, preços e estoque de prontos.'],
+    cardapio: ['Cardápio', 'Vitrine dos doces disponíveis para venda.'],
+    producao: ['Produção', 'Organize a produção diária da cozinha.'],
+    estoque: ['Estoque', 'Controle de ingredientes e insumos.'],
+    financeiro: ['Financeiro', 'Receitas, despesas e saúde financeira do negócio.'],
+    precificacao: ['Precificação', 'Calcule o custo e o preço ideal dos seus doces.'],
+    relatorios: ['Relatórios', 'Indicadores e desempenho de vendas.'],
+    configuracoes: ['Configurações', 'Dados da loja, categorias e preferências.']
+};
+
+let _currentView = 'dashboard';
+
+function updateGreeting() {
+    if (_currentView !== 'dashboard') return;
+    const nome = Store.config.nomeAdmin || Auth.firstName();
+    document.getElementById('topbar-title').textContent = TITLES.dashboard[0].replace('{nome}', nome);
+}
+
+function goToView(name) {
+    if (!VIEWS.includes(name)) return;
+    _currentView = name;
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === name));
+    document.querySelectorAll('.view-section').forEach(el => el.classList.toggle('active', el.id === `view-${name}`));
+    const [title, sub] = TITLES[name];
+    document.getElementById('topbar-title').textContent = name === 'dashboard' ? title.replace('{nome}', Store.config.nomeAdmin || Auth.firstName()) : title;
+    document.getElementById('topbar-sub').textContent = sub;
+    document.getElementById('view').scrollTop = 0;
+    closeMobileSidebar();
+}
+
+function closeMobileSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-backdrop').classList.remove('open');
+}
+
+function bindNav() {
+    document.getElementById('nav-links').addEventListener('click', (e) => {
+        const item = e.target.closest('.nav-item');
+        if (item) goToView(item.dataset.view);
+    });
+    document.getElementById('mobile-toggle').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sidebar-backdrop').classList.add('open');
+    });
+    document.getElementById('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
+
+    document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-goto]');
+        if (el) goToView(el.dataset.goto);
+    });
+}
+
+function updateTopbarDate() {
+    const el = document.getElementById('topbar-date');
+    if (el) el.textContent = Utils.formatDateBR(new Date());
+}
+
+/* ---------------------------------------------------------------------- */
+/* Boot                                                                    */
+/* ---------------------------------------------------------------------- */
+function mountAllModules() {
+    Dashboard.mount();
+    Pedidos.mount();
+    Clientes.mount();
+    Produtos.mount();
+    Cardapio.mount();
+    Producao.mount();
+    Estoque.mount();
+    Financeiro.mount();
+    Precificacao.mount();
+    Relatorios.mount();
+    Configuracoes.mount();
+}
+
+function bindStoreSubscriptions() {
+    Store.on('*', () => Dashboard.render());
+    Store.on('pedidos', () => Pedidos.render());
+    Store.on('clientes', () => { Clientes.render(); Pedidos.render(); });
+    Store.on('produtos', () => { Produtos.render(); Cardapio.render(); Pedidos.render(); Precificacao.render(); });
+    Store.on('estoque', () => { Estoque.render(); Precificacao.render(); });
+    Store.on('financeiro', () => Financeiro.render());
+    Store.on('producao', () => Producao.render());
+    Store.on('receitas', () => Precificacao.render());
+    Store.on('config', () => { Configuracoes.render(); Pedidos.render(); updateGreeting(); refreshSidebarUser(); });
+    Store.on('*', () => Relatorios.render());
+}
+
+function refreshSidebarUser() {
+    const nome = Store.config.nomeAdmin || Auth.firstName();
+    const email = Auth.currentUser()?.email || '';
+    const nameEl = document.getElementById('user-name');
+    nameEl.textContent = nome;
+    nameEl.title = email;
+    document.getElementById('user-avatar').textContent = nome.trim().charAt(0).toUpperCase();
+}
+
+function showApp() {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-shell').style.display = 'flex';
+    refreshSidebarUser();
+    goToView('dashboard');
+}
+
+function showLogin() {
+    document.getElementById('app-shell').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    updateTopbarDate();
+    bindNav();
+    Auth.bindLoginForm();
+    mountAllModules();
+    bindStoreSubscriptions();
+
+    window.auth.onAuthStateChanged(user => {
+        document.getElementById('app-loading').style.display = 'none';
+        if (user) {
+            initStoreListeners();
+            showApp();
+        } else {
+            teardownStoreListeners();
+            showLogin();
+        }
+    });
+});
