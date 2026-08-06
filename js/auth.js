@@ -4,8 +4,6 @@
 
 const Auth = (() => {
 
-    let mode = 'login';
-
     function currentUser() {
         return window.auth.currentUser;
     }
@@ -59,63 +57,69 @@ const Auth = (() => {
         return map[code] || 'Não foi possível concluir. Tente novamente.';
     }
 
-    function setMode(newMode) {
-        mode = newMode;
-        const isLogin = mode === 'login';
-        document.getElementById('auth-title').textContent = isLogin ? 'Entrar no painel' : 'Criar sua conta';
-        document.getElementById('auth-sub').textContent = isLogin ? 'Acesse sua conta para gerenciar a loja.' : 'Cadastre-se com e-mail e senha para começar.';
-        document.getElementById('login-submit').innerHTML = isLogin
-            ? '<i class="fa-solid fa-right-to-bracket"></i> Entrar'
-            : '<i class="fa-solid fa-user-plus"></i> Criar conta';
-        document.getElementById('auth-switch-text').textContent = isLogin ? 'Ainda não tem conta?' : 'Já tem conta?';
-        document.getElementById('auth-switch-link').textContent = isLogin ? 'Criar conta' : 'Entrar';
+    function showPanel(name) {
+        document.getElementById('panel-login').style.display = name === 'login' ? 'block' : 'none';
+        document.getElementById('panel-register').style.display = name === 'register' ? 'block' : 'none';
         document.getElementById('login-error').style.display = 'none';
+        document.getElementById('register-error').style.display = 'none';
+    }
+
+    async function withLoadingButton(btn, loadingHtml, action, errBox) {
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = loadingHtml;
+        try {
+            await action();
+        } catch (err) {
+            errBox.textContent = friendlyError(err.code);
+            errBox.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 
     function bindLoginForm() {
-        const form = document.getElementById('login-form');
-        const errBox = document.getElementById('login-error');
+        showPanel('login');
 
-        setMode('login');
+        document.getElementById('btn-go-register').addEventListener('click', () => showPanel('register'));
+        document.getElementById('btn-go-login').addEventListener('click', (e) => { e.preventDefault(); showPanel('login'); });
 
-        document.getElementById('auth-switch-link').addEventListener('click', (e) => {
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            setMode(mode === 'login' ? 'register' : 'login');
-        });
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
+            const errBox = document.getElementById('login-error');
             errBox.style.display = 'none';
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             const btn = document.getElementById('login-submit');
-            const originalHtml = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...';
-            try {
-                if (mode === 'login') await login(email, password);
-                else await register(email, password);
-            } catch (err) {
-                errBox.textContent = friendlyError(err.code);
-                errBox.style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalHtml;
-            }
+            await withLoadingButton(btn, '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...', () => login(email, password), errBox);
         });
 
-        document.getElementById('btn-google').addEventListener('click', async () => {
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errBox = document.getElementById('register-error');
             errBox.style.display = 'none';
-            const btn = document.getElementById('btn-google');
-            btn.disabled = true;
-            try {
-                await loginWithGoogle();
-            } catch (err) {
-                errBox.textContent = friendlyError(err.code);
+            const email = document.getElementById('register-email').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-password-confirm').value;
+            if (password !== confirm) {
+                errBox.textContent = 'As senhas não coincidem.';
                 errBox.style.display = 'block';
-            } finally {
-                btn.disabled = false;
+                return;
             }
+            const btn = document.getElementById('register-submit');
+            await withLoadingButton(btn, '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...', () => register(email, password), errBox);
+        });
+
+        document.getElementById('btn-google-login').addEventListener('click', function () {
+            const errBox = document.getElementById('login-error');
+            errBox.style.display = 'none';
+            withLoadingButton(this, '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...', loginWithGoogle, errBox);
+        });
+        document.getElementById('btn-google-register').addEventListener('click', function () {
+            const errBox = document.getElementById('register-error');
+            errBox.style.display = 'none';
+            withLoadingButton(this, '<i class="fa-solid fa-spinner fa-spin"></i> Aguarde...', loginWithGoogle, errBox);
         });
 
         document.getElementById('btn-logout').addEventListener('click', () => {
