@@ -73,16 +73,8 @@ const Storefront = (() => {
             </header>
 
             <section class="store-hero">
-                <div class="store-hero-text">
-                    <span class="store-hero-script">Promoção</span>
-                    <h1>DOCE MOMENTO</h1>
-                    <p id="store-hero-sub">Doçura que abraça,<br>sabor que fica na memória. 🧡</p>
-                    <a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a>
-                </div>
-                <div class="store-hero-art-wrap" id="store-hero-art-wrap">
-                    <div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div>
-                    <div class="store-hero-badge"><span>Novidade</span></div>
-                </div>
+                <div class="store-hero-media" id="store-hero-art-wrap"></div>
+                <a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a>
             </section>
 
             <section class="store-features">
@@ -107,12 +99,8 @@ const Storefront = (() => {
             </section>
 
             <section class="store-banner" id="store-kits">
-                <div>
-                    <span class="store-hero-tag light">Compartilhe</span>
-                    <h2>Doçura!</h2>
-                    <p>Kits especiais para tornar qualquer momento inesquecível.</p>
-                    <a href="#store-produtos" class="btn btn-primary">Quero presentear</a>
-                </div>
+                <div class="store-banner-media" id="store-banner-media"></div>
+                <a href="#store-produtos" class="btn btn-primary">Quero presentear</a>
             </section>
 
             <section class="store-benefits" id="store-sobre">
@@ -273,14 +261,13 @@ const Storefront = (() => {
         const tel = document.getElementById('store-contato-tel');
         const insta = document.getElementById('store-contato-insta');
         const end = document.getElementById('store-contato-end');
-        const sub = document.getElementById('store-hero-sub');
         const handle = document.getElementById('store-insta-handle');
         if (tel) tel.innerHTML = `<i class="fa-brands fa-whatsapp"></i> ${Utils.escapeHtml(config.telefone || 'Em breve')}`;
         if (insta) insta.innerHTML = `<i class="fa-brands fa-instagram"></i> ${Utils.escapeHtml(config.instagram || '@valledoces')}`;
         if (end) end.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${Utils.escapeHtml(config.endereco || 'Consulte a loja')}`;
         if (handle) handle.textContent = config.instagram || '@valledoces';
-        if (sub && config.nomeLoja) sub.innerHTML = `Doces artesanais da ${Utils.escapeHtml(config.nomeLoja)},<br>feitos com amor para adoçar os seus melhores momentos. 🧡`;
         renderHero();
+        renderBanner();
     }
 
     function stopCarousel() {
@@ -304,7 +291,7 @@ const Storefront = (() => {
         if (!wrap) return;
         if (!capas.length) {
             stopCarousel();
-            wrap.innerHTML = `<div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div><div class="store-hero-badge"><span>Novidade</span></div>`;
+            wrap.innerHTML = `<div class="store-hero-placeholder"><i class="fa-solid fa-cookie-bite"></i></div>`;
             return;
         }
         wrap.innerHTML = `
@@ -316,6 +303,14 @@ const Storefront = (() => {
             </div>
         `;
         startCarousel(capas.length);
+    }
+
+    function renderBanner() {
+        const wrap = document.getElementById('store-banner-media');
+        if (!wrap) return;
+        wrap.innerHTML = config.bannerMeio
+            ? `<img src="${config.bannerMeio}" alt="">`
+            : `<i class="fa-solid fa-gift"></i>`;
     }
 
     function renderCats() {

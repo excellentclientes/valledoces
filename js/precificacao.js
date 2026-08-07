@@ -209,6 +209,12 @@ const Precificacao = (() => {
     function render() {
         const tbody = document.getElementById('receitas-tbody');
         if (!tbody) return;
+
+        Utils.refreshSelectOptions('f-produto', Store.produtos.map(p => ({ value: p.id, label: p.nome })), 'Sem vínculo (cálculo avulso)');
+        ingRows.forEach((row, idx) => {
+            Utils.refreshSelectOptions(`ing-insumo-${idx}`, Store.estoque.map(s => ({ value: s.id, label: `${s.nome} (${Utils.formatBRL(s.custoUnitario)}/${s.unidade})` })), 'Selecione o ingrediente...');
+        });
+
         if (!Store.receitas.length) {
             tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-tags"></i>Nenhuma ficha técnica salva ainda.</div></td></tr>`;
             return;
