@@ -125,7 +125,7 @@ const Auth = (() => {
         document.getElementById('btn-logout').addEventListener('click', () => {
             Utils.confirmDialog('Deseja realmente sair do sistema?', async () => {
                 await logout();
-            }, 'Sair do sistema');
+            }, 'Sair do sistema', 'Sim, sair');
         });
     }
 

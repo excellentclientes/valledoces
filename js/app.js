@@ -270,9 +270,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isAuthorizedEmail(user.email, Store.config.usuariosAutorizados)) {
             initStoreListeners();
             watchProfile(user.uid);
-            Onboarding.start(user, () => showApp());
+            Onboarding.start(user, 'admin', () => showApp());
         } else {
-            showStorefrontScreen();
+            Onboarding.start(user, 'cliente', () => showStorefrontScreen());
         }
     });
 });

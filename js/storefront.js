@@ -12,6 +12,9 @@ const Storefront = (() => {
     let searchTerm = '';
     let unsubs = [];
     let mounted = false;
+    let meuCliente = null;
+    let carouselTimer = null;
+    let carouselIndex = 0;
 
     function mount() {
         if (mounted) { render(); return; }
@@ -20,6 +23,16 @@ const Storefront = (() => {
         el.innerHTML = shellHtml();
         bindStatic();
         listen();
+        loadMeuCliente();
+    }
+
+    async function loadMeuCliente() {
+        const user = Auth.currentUser();
+        if (!user) return;
+        try {
+            const snap = await window.db.collection('clientes').doc(user.uid).get();
+            meuCliente = snap.exists ? { id: user.uid, ...snap.data() } : null;
+        } catch (err) { console.error('meuCliente', err); }
     }
 
     function shellHtml() {
@@ -65,7 +78,7 @@ const Storefront = (() => {
                     <p id="store-hero-sub">Doçura que abraça,<br>sabor que fica na memória. 🧡</p>
                     <a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a>
                 </div>
-                <div class="store-hero-art-wrap">
+                <div class="store-hero-art-wrap" id="store-hero-art-wrap">
                     <div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div>
                     <div class="store-hero-badge"><span>Novidade</span></div>
                 </div>
@@ -184,7 +197,7 @@ const Storefront = (() => {
         document.getElementById('store-cart-backdrop').addEventListener('click', () => { toggleCart(false); toggleAccountPop(false); });
         document.getElementById('store-cart-checkout').addEventListener('click', checkout);
         document.getElementById('store-logout-btn').addEventListener('click', () => {
-            Utils.confirmDialog('Deseja sair da sua conta?', async () => { await Auth.logout(); }, 'Sair');
+            Utils.confirmDialog('Deseja sair da sua conta?', async () => { await Auth.logout(); }, 'Sair', 'Sim, sair');
         });
         document.getElementById('store-account-btn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -262,6 +275,43 @@ const Storefront = (() => {
         if (end) end.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${Utils.escapeHtml(config.endereco || 'Consulte a loja')}`;
         if (handle) handle.textContent = config.instagram || '@valledoces';
         if (sub && config.nomeLoja) sub.innerHTML = `Doces artesanais da ${Utils.escapeHtml(config.nomeLoja)},<br>feitos com amor para adoçar os seus melhores momentos. 🧡`;
+        renderHero();
+    }
+
+    function stopCarousel() {
+        if (carouselTimer) { clearInterval(carouselTimer); carouselTimer = null; }
+    }
+
+    function startCarousel(count) {
+        stopCarousel();
+        carouselIndex = 0;
+        if (count <= 1) return;
+        carouselTimer = setInterval(() => {
+            carouselIndex = (carouselIndex + 1) % count;
+            const track = document.getElementById('store-hero-track');
+            if (track) track.style.transform = `translateX(-${carouselIndex * 100}%)`;
+            document.querySelectorAll('#store-hero-dots .store-hero-dot').forEach((d, i) => d.classList.toggle('active', i === carouselIndex));
+        }, 3000);
+    }
+
+    function renderHero() {
+        const wrap = document.getElementById('store-hero-art-wrap');
+        if (!wrap) return;
+        const capas = config.capas || [];
+        if (!capas.length) {
+            stopCarousel();
+            wrap.innerHTML = `<div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div><div class="store-hero-badge"><span>Novidade</span></div>`;
+            return;
+        }
+        wrap.innerHTML = `
+            <div class="store-hero-carousel">
+                <div class="store-hero-carousel-track" id="store-hero-track">
+                    ${capas.map(url => `<div class="store-hero-slide"><img src="${url}" alt=""></div>`).join('')}
+                </div>
+                ${capas.length > 1 ? `<div class="store-hero-dots" id="store-hero-dots">${capas.map((_, i) => `<span class="store-hero-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
+            </div>
+        `;
+        startCarousel(capas.length);
     }
 
     function renderCats() {
@@ -358,13 +408,70 @@ const Storefront = (() => {
         document.getElementById('store-cart-total').textContent = Utils.formatBRL(cartTotal());
     }
 
-    function checkout() {
+    async function checkout() {
         if (!cart.length) { Utils.toast('Seu carrinho está vazio.', 'error'); return; }
-        const linhas = cart.map(i => `• ${i.qtd}x ${i.nome} — ${Utils.formatBRL(i.preco * i.qtd)}`).join('\n');
-        const texto = `Olá! Gostaria de fazer este pedido:\n\n${linhas}\n\n*Total: ${Utils.formatBRL(cartTotal())}*`;
         const tel = (config.telefone || '').replace(/\D/g, '');
         if (!tel) { Utils.toast('A loja ainda não configurou um telefone para pedidos.', 'error'); return; }
-        window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+
+        const btn = document.getElementById('store-cart-checkout');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando pedido...';
+
+        try {
+            const user = Auth.currentUser();
+            const itens = cart.map(i => ({ produtoId: i.id, nome: i.nome, quantidade: i.qtd, precoUnitario: i.preco, subtotal: i.preco * i.qtd }));
+            const total = cartTotal();
+            const numero = await window.nextPedidoNumero();
+
+            const batch = window.db.batch();
+            const pedidoRef = window.db.collection('pedidos').doc();
+            const clienteNome = (meuCliente && meuCliente.nome) || user?.displayName || 'Cliente da loja virtual';
+            batch.set(pedidoRef, {
+                numero,
+                clienteId: user ? user.uid : null,
+                clienteNome,
+                clienteTelefone: (meuCliente && meuCliente.telefone) || '',
+                itens, subtotal: total, taxaEntrega: 0, total,
+                formaPagamento: 'A combinar', status: 'aguardando',
+                endereco: (meuCliente && meuCliente.endereco) || '',
+                observacoes: 'Pedido feito pela loja virtual.',
+                dataEntrega: null, origem: 'loja-virtual',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            const finRef = window.db.collection('financeiro').doc();
+            batch.set(finRef, {
+                tipo: 'receita', categoria: 'Venda de doces', descricao: `Pedido #${numero} — ${clienteNome} (loja virtual)`,
+                valor: total, formaPagamento: 'A combinar', data: new Date(),
+                pedidoId: pedidoRef.id, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            itens.forEach(i => {
+                const prodRef = window.db.collection('producao').doc();
+                batch.set(prodRef, {
+                    data: new Date(), produtoId: i.produtoId, produtoNome: i.nome,
+                    quantidade: i.quantidade, status: 'pendente', pedidoId: pedidoRef.id,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+
+            await batch.commit();
+
+            const linhas = cart.map(i => `• ${i.qtd}x ${i.nome} — ${Utils.formatBRL(i.preco * i.qtd)}`).join('\n');
+            const texto = `Olá! Acabei de fazer o pedido #${numero} pelo site:\n\n${linhas}\n\n*Total: ${Utils.formatBRL(total)}*`;
+            window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+
+            cart = [];
+            renderCart();
+            toggleCart(false);
+            Utils.toast(`Pedido #${numero} enviado à loja!`, 'success');
+        } catch (err) {
+            Utils.toast('Erro ao enviar pedido: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml;
+        }
     }
 
     async function subscribeNewsletter(e) {

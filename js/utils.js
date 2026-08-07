@@ -78,10 +78,11 @@ const Utils = (() => {
         document.getElementById('modal-box').innerHTML = '';
     }
 
-    function confirmDialog(message, onConfirm, title = 'Confirmar exclusão') {
+    function confirmDialog(message, onConfirm, title = 'Confirmar exclusão', okLabel = 'Sim, excluir') {
         const overlay = document.getElementById('confirm-overlay');
         document.getElementById('confirm-title').textContent = title;
         document.getElementById('confirm-msg').textContent = message;
+        document.getElementById('confirm-ok').textContent = okLabel;
         overlay.classList.add('open');
         const okBtn = document.getElementById('confirm-ok');
         const cancelBtn = document.getElementById('confirm-cancel');

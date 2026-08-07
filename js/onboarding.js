@@ -10,12 +10,18 @@ const Onboarding = (() => {
     let photoFile = null;
     let chosenPhotoUrl = null;
     let data = { nome: '', telefone: '' };
+    let mode = 'admin'; // 'admin' -> usuarios/{uid} | 'cliente' -> clientes/{uid}
 
-    async function start(user, cb) {
+    function targetCollection() {
+        return mode === 'admin' ? 'usuarios' : 'clientes';
+    }
+
+    async function start(user, targetMode, cb) {
         currentUser = user;
         onDone = cb;
+        mode = targetMode;
         try {
-            const snap = await window.db.collection('usuarios').doc(user.uid).get();
+            const snap = await window.db.collection(targetCollection()).doc(user.uid).get();
             if (snap.exists) { cb(); return; }
         } catch (err) {
             console.error('onboarding check', err);
@@ -54,7 +60,7 @@ const Onboarding = (() => {
         return `
         <div class="onboard-icon"><i class="fa-solid fa-user"></i></div>
         <h2>Como você se chama?</h2>
-        <p class="onboard-sub">Vamos usar seu nome para personalizar o painel.</p>
+        <p class="onboard-sub">${mode === 'admin' ? 'Vamos usar seu nome para personalizar o painel.' : 'Vamos usar seu nome para identificar seus pedidos.'}</p>
         <div class="form-group"><input type="text" id="onboard-nome" placeholder="Seu nome" value="${Utils.escapeHtml(data.nome)}" autofocus></div>
         <div class="login-error" id="onboard-error"></div>
         <div class="onboard-actions">
@@ -67,7 +73,7 @@ const Onboarding = (() => {
         return `
         <div class="onboard-icon"><i class="fa-solid fa-phone"></i></div>
         <h2>Qual o seu telefone?</h2>
-        <p class="onboard-sub">Usado para contato e para o WhatsApp da loja.</p>
+        <p class="onboard-sub">${mode === 'admin' ? 'Usado para contato e para o WhatsApp da loja.' : 'Usado para a loja combinar entrega e pagamento do seu pedido.'}</p>
         <div class="form-group"><input type="text" id="onboard-telefone" placeholder="(00) 00000-0000" value="${Utils.escapeHtml(data.telefone)}" autofocus></div>
         <div class="login-error" id="onboard-error"></div>
         <div class="onboard-actions">
@@ -149,13 +155,15 @@ const Onboarding = (() => {
                 await ref.put(photoFile);
                 fotoUrl = await ref.getDownloadURL();
             }
-            await window.db.collection('usuarios').doc(currentUser.uid).set({
+            const payload = {
                 nome: data.nome,
                 telefone: data.telefone,
                 fotoUrl: fotoUrl || '',
                 email: currentUser.email || '',
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            };
+            if (mode === 'cliente') { payload.endereco = ''; payload.observacoes = ''; }
+            await window.db.collection(targetCollection()).doc(currentUser.uid).set(payload, { merge: true });
             document.getElementById('onboarding-screen').style.display = 'none';
             document.getElementById('onboarding-screen').innerHTML = '';
             if (onDone) onDone();

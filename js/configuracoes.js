@@ -14,6 +14,7 @@ const Configuracoes = (() => {
                 <div class="settings-tab active" data-tab="loja">Dados da loja</div>
                 <div class="settings-tab" data-tab="categorias">Categorias de produtos</div>
                 <div class="settings-tab" data-tab="pagamento">Formas de pagamento</div>
+                <div class="settings-tab" data-tab="capa">Capa da loja</div>
                 <div class="settings-tab" data-tab="usuarios">Usuários autorizados</div>
                 <div class="settings-tab" data-tab="conta">Minha conta</div>
             </div>
@@ -52,6 +53,21 @@ const Configuracoes = (() => {
                         <input type="text" id="new-pagamento" placeholder="Nova forma (ex: Boleto)">
                         <button class="btn btn-primary btn-sm" id="btn-add-pagamento"><i class="fa-solid fa-plus"></i></button>
                     </div>
+                </div>
+            </div>
+
+            <div class="settings-panel" id="panel-capa">
+                <div class="panel" style="max-width:680px;">
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+                        Fotos exibidas em destaque na loja virtual. Com mais de uma, elas alternam
+                        automaticamente a cada 3 segundos, deslizando para a esquerda.
+                    </p>
+                    <div class="capa-grid" id="capa-grid"></div>
+                    <label class="btn btn-outline btn-sm" style="margin-top:14px;cursor:pointer;display:inline-flex;">
+                        <i class="fa-solid fa-upload"></i> Adicionar foto
+                        <input type="file" id="capa-input" accept="image/*" style="display:none;">
+                    </label>
+                    <span id="capa-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                 </div>
             </div>
 
@@ -113,6 +129,8 @@ const Configuracoes = (() => {
         document.getElementById('new-pagamento').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addChip('formasPagamento', 'new-pagamento'); } });
         document.getElementById('new-usuario').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); addChip('usuariosAutorizados', 'new-usuario', true); } });
 
+        document.getElementById('capa-input').addEventListener('change', uploadCapa);
+
         document.getElementById('conta-foto-input').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -124,7 +142,9 @@ const Configuracoes = (() => {
 
         el.addEventListener('click', (e) => {
             const rm = e.target.closest('.js-chip-remove');
+            const rmCapa = e.target.closest('.js-capa-remove');
             if (rm) removeChip(rm.dataset.field, rm.dataset.value);
+            if (rmCapa) removeCapa(rmCapa.dataset.url);
         });
 
         document.getElementById('btn-reset-senha').addEventListener('click', async () => {
@@ -134,7 +154,7 @@ const Configuracoes = (() => {
             } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
         });
         document.getElementById('btn-sair-conta').addEventListener('click', () => {
-            Utils.confirmDialog('Deseja realmente sair do sistema?', async () => { await Auth.logout(); }, 'Sair do sistema');
+            Utils.confirmDialog('Deseja realmente sair do sistema?', async () => { await Auth.logout(); }, 'Sair do sistema', 'Sim, sair');
         });
 
         render();
@@ -187,6 +207,49 @@ const Configuracoes = (() => {
         }
     }
 
+    async function uploadCapa(e) {
+        const file = e.target.files[0];
+        if (!file || !window.storage) return;
+        const status = document.getElementById('capa-uploading');
+        status.style.display = 'inline';
+        try {
+            const path = `capas/${Date.now()}_${file.name}`;
+            const ref = window.storage.ref().child(path);
+            await ref.put(file);
+            const url = await ref.getDownloadURL();
+            await window.db.collection('configuracoes').doc('geral').set({
+                capas: firebase.firestore.FieldValue.arrayUnion(url)
+            }, { merge: true });
+            Utils.toast('Foto de capa adicionada.', 'success');
+        } catch (err) {
+            Utils.toast('Erro ao enviar foto: ' + err.message, 'error');
+        } finally {
+            status.style.display = 'none';
+            e.target.value = '';
+        }
+    }
+
+    async function removeCapa(url) {
+        Utils.confirmDialog('Remover esta foto da capa da loja?', async () => {
+            try {
+                await window.db.collection('configuracoes').doc('geral').update({
+                    capas: firebase.firestore.FieldValue.arrayRemove(url)
+                });
+                Utils.toast('Foto removida.', 'success');
+            } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
+        }, 'Remover foto');
+    }
+
+    function capaGridHtml(capas) {
+        if (!capas || !capas.length) return '<span style="font-size:0.82rem;color:var(--text-muted);">Nenhuma foto de capa ainda.</span>';
+        return capas.map(url => `
+            <div class="capa-thumb">
+                <img src="${url}">
+                <button class="js-capa-remove" data-url="${Utils.escapeHtml(url)}" title="Remover"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `).join('');
+    }
+
     async function addChip(field, inputId, isEmail = false) {
         const input = document.getElementById(inputId);
         let value = input.value.trim();
@@ -226,6 +289,7 @@ const Configuracoes = (() => {
         document.getElementById('f-endereco-loja').value = c.endereco || '';
         document.getElementById('f-taxa-padrao').value = c.taxaEntregaPadrao || 0;
 
+        document.getElementById('capa-grid').innerHTML = capaGridHtml(c.capas);
         document.getElementById('chips-categorias').innerHTML = chipHtml('categoriasProdutos', c.categoriasProdutos);
         document.getElementById('chips-pagamento').innerHTML = chipHtml('formasPagamento', c.formasPagamento);
         document.getElementById('chips-usuarios').innerHTML = chipHtml('usuariosAutorizados', c.usuariosAutorizados);
