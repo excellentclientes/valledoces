@@ -210,7 +210,7 @@ function bindStoreSubscriptions() {
     Store.on('financeiro', () => Financeiro.render());
     Store.on('producao', () => Producao.render());
     Store.on('receitas', () => Precificacao.render());
-    Store.on('config', () => { Configuracoes.render(); Pedidos.render(); updateGreeting(); refreshSidebarUser(); });
+    Store.on('config', () => { Configuracoes.render(); Pedidos.render(); updateGreeting(); refreshSidebarUser(); applyPainelBackground(); });
     Store.on('capas', () => Configuracoes.render());
     Store.on('profile', () => { updateGreeting(); refreshSidebarUser(); Configuracoes.render(); });
     Store.on('*', () => Relatorios.render());
@@ -225,6 +225,19 @@ function refreshSidebarUser() {
     nameEl.title = email;
     const avatarEl = document.getElementById('user-avatar');
     avatarEl.innerHTML = foto ? `<img src="${foto}" alt="">` : nome.trim().charAt(0).toUpperCase();
+}
+
+function applyPainelBackground() {
+    const view = document.getElementById('view');
+    if (!view) return;
+    if (Store.config.fundoPainel) {
+        view.style.backgroundImage = `linear-gradient(rgba(20,10,5,0.6), rgba(20,10,5,0.6)), url("${Store.config.fundoPainel}")`;
+        view.style.backgroundSize = 'cover';
+        view.style.backgroundPosition = 'center';
+        view.style.backgroundRepeat = 'no-repeat';
+    } else {
+        view.style.backgroundImage = '';
+    }
 }
 
 function showApp() {

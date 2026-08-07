@@ -73,7 +73,7 @@ const Configuracoes = (() => {
                     <span id="capa-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                 </div>
 
-                <div class="panel" style="max-width:680px;">
+                <div class="panel" style="max-width:680px;margin-bottom:20px;">
                     <h3 style="font-size:0.95rem;margin-bottom:4px;">Banner do meio ("Doçura")</h3>
                     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
                         Imagem exibida na seção de destaque entre o catálogo e os benefícios,
@@ -85,6 +85,21 @@ const Configuracoes = (() => {
                         <input type="file" id="banner-input" accept="image/*" style="display:none;">
                     </label>
                     <span id="banner-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
+                </div>
+
+                <div class="panel" style="max-width:680px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo do painel administrativo</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+                        Imagem de fundo só do painel de gestão (esta tela que você está vendo agora),
+                        não aparece na loja virtual. Fica escurecida automaticamente para não atrapalhar
+                        a leitura dos cartões e tabelas.
+                    </p>
+                    <div class="capa-grid" id="fundo-grid"></div>
+                    <label class="btn btn-outline btn-sm" style="margin-top:14px;cursor:pointer;display:inline-flex;">
+                        <i class="fa-solid fa-upload"></i> Adicionar/trocar imagem
+                        <input type="file" id="fundo-input" accept="image/*" style="display:none;">
+                    </label>
+                    <span id="fundo-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                 </div>
             </div>
 
@@ -148,6 +163,7 @@ const Configuracoes = (() => {
 
         document.getElementById('capa-input').addEventListener('change', uploadCapa);
         document.getElementById('banner-input').addEventListener('change', uploadBanner);
+        document.getElementById('fundo-input').addEventListener('change', uploadFundoPainel);
 
         document.getElementById('conta-foto-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -168,9 +184,11 @@ const Configuracoes = (() => {
             const rm = e.target.closest('.js-chip-remove');
             const rmCapa = e.target.closest('.js-capa-remove');
             const rmBanner = e.target.closest('.js-banner-remove');
+            const rmFundo = e.target.closest('.js-fundo-remove');
             if (rm) removeChip(rm.dataset.field, rm.dataset.value);
             if (rmCapa) removeCapa(rmCapa.dataset.id);
             if (rmBanner) removeBanner();
+            if (rmFundo) removeFundoPainel();
         });
 
         document.getElementById('btn-reset-senha').addEventListener('click', async () => {
@@ -304,6 +322,44 @@ const Configuracoes = (() => {
         `;
     }
 
+    async function uploadFundoPainel(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const status = document.getElementById('fundo-uploading');
+        status.style.display = 'inline';
+        try {
+            const fundoPainel = await Utils.compressImageToBase64(file, { maxDim: 1400, maxBytes: 300000 });
+            await window.db.collection('configuracoes').doc('geral').set({ fundoPainel }, { merge: true });
+            Utils.toast('Fundo do painel atualizado.', 'success');
+        } catch (err) {
+            Utils.toast('Erro ao enviar imagem: ' + err.message, 'error');
+        } finally {
+            status.style.display = 'none';
+            e.target.value = '';
+        }
+    }
+
+    async function removeFundoPainel() {
+        Utils.confirmDialog('Remover o fundo do painel administrativo?', async () => {
+            try {
+                await window.db.collection('configuracoes').doc('geral').update({
+                    fundoPainel: firebase.firestore.FieldValue.delete()
+                });
+                Utils.toast('Fundo removido.', 'success');
+            } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
+        }, 'Remover fundo', 'Sim, remover');
+    }
+
+    function fundoGridHtml(fundoPainel) {
+        if (!fundoPainel) return '<span style="font-size:0.82rem;color:var(--text-muted);">Nenhuma imagem definida — o painel usa o fundo padrão.</span>';
+        return `
+            <div class="capa-thumb">
+                <img src="${fundoPainel}">
+                <button class="js-fundo-remove" title="Remover"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+    }
+
     async function addChip(field, inputId, isEmail = false) {
         const input = document.getElementById(inputId);
         let value = input.value.trim();
@@ -345,6 +401,7 @@ const Configuracoes = (() => {
 
         document.getElementById('capa-grid').innerHTML = capaGridHtml(Store.capas);
         document.getElementById('banner-grid').innerHTML = bannerGridHtml(c.bannerMeio);
+        document.getElementById('fundo-grid').innerHTML = fundoGridHtml(c.fundoPainel);
         document.getElementById('chips-categorias').innerHTML = chipHtml('categoriasProdutos', c.categoriasProdutos);
         document.getElementById('chips-pagamento').innerHTML = chipHtml('formasPagamento', c.formasPagamento);
         document.getElementById('chips-usuarios').innerHTML = chipHtml('usuariosAutorizados', c.usuariosAutorizados);

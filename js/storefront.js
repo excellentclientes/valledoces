@@ -92,7 +92,6 @@ const Storefront = (() => {
 
                 <div class="store-section-head" style="margin-top:36px;">
                     <h2>Nossos doces 🧡</h2>
-                    <span class="store-link" data-cat-reset="1">Ver todos os produtos <i class="fa-solid fa-arrow-right"></i></span>
                 </div>
                 <div class="store-grid" id="store-grid"></div>
             </section>

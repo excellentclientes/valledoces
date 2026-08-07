@@ -24,7 +24,7 @@ const Estoque = (() => {
             <div class="table-card">
                 <div class="table-scroll">
                     <table>
-                        <thead><tr><th>Ingrediente</th><th>Categoria</th><th>Qtd. atual</th><th>Qtd. mínima</th><th>Custo unit.</th><th>Fornecedor</th><th></th></tr></thead>
+                        <thead><tr><th>Ingrediente</th><th>Categoria</th><th>Qtd. atual</th><th>Qtd. mínima</th><th>Custo por g/kg/un</th><th>Fornecedor</th><th></th></tr></thead>
                         <tbody id="estoque-tbody"></tbody>
                     </table>
                 </div>
@@ -65,7 +65,7 @@ const Estoque = (() => {
                 <td>${Utils.escapeHtml(i.categoria || '—')}</td>
                 <td style="color:${baixo ? 'var(--danger)' : 'inherit'};font-weight:${baixo ? 700 : 400};">${Number(i.quantidadeAtual || 0).toLocaleString('pt-BR')} ${Utils.escapeHtml(i.unidade || '')}</td>
                 <td>${Number(i.quantidadeMinima || 0).toLocaleString('pt-BR')} ${Utils.escapeHtml(i.unidade || '')}</td>
-                <td>${Utils.formatBRL(i.custoUnitario)}</td>
+                <td>R$ ${Number(i.custoUnitario || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}/${Utils.escapeHtml(i.unidade || 'un')}</td>
                 <td>${Utils.escapeHtml(i.fornecedor || '—')}</td>
                 <td>
                     <div class="row-actions">
@@ -95,9 +95,14 @@ const Estoque = (() => {
                     <div class="form-group"><label>Quantidade mínima</label><input type="number" step="0.01" min="0" id="f-qtd-min" value="${i ? i.quantidadeMinima ?? 0 : 0}"></div>
                 </div>
                 <div class="form-row">
-                    <div class="form-group"><label>Custo unitário (R$)</label><input type="number" step="0.01" min="0" id="f-custo" value="${i ? i.custoUnitario ?? 0 : 0}"></div>
-                    <div class="form-group"><label>Fornecedor</label><input type="text" id="f-fornecedor" value="${i ? Utils.escapeHtml(i.fornecedor || '') : ''}"></div>
+                    <div class="form-group"><label>Rende quantos (na unidade acima)?</label><input type="number" step="0.01" min="0.01" id="f-qtd-compra" value="${i ? i.quantidadeCompra ?? 1 : 1}" placeholder="Ex: 400"></div>
+                    <div class="form-group"><label>Custo dessa compra (R$)</label><input type="number" step="0.01" min="0" id="f-custo-compra" value="${i ? i.custoCompra ?? i.custoUnitario ?? 0 : 0}" placeholder="Ex: 7,50"></div>
                 </div>
+                <p style="font-size:0.76rem;color:var(--text-muted);margin:-8px 0 14px;">
+                    Ex.: um pacote de 400 g que custou R$ 7,50 → preencha 400 e 7,50. O sistema calcula
+                    sozinho o custo por g/kg/un usado nas fichas técnicas — não precisa fazer essa conta.
+                </p>
+                <div class="form-group"><label>Fornecedor</label><input type="text" id="f-fornecedor" value="${i ? Utils.escapeHtml(i.fornecedor || '') : ''}"></div>
                 <div class="form-actions">
                     <button type="button" class="btn btn-outline" onclick="Utils.closeModal()">Cancelar</button>
                     <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Salvar</button>
@@ -106,13 +111,16 @@ const Estoque = (() => {
         `);
         document.getElementById('insumo-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const quantidadeCompra = Number(document.getElementById('f-qtd-compra').value) || 1;
+            const custoCompra = Number(document.getElementById('f-custo-compra').value) || 0;
             const data = {
                 nome: document.getElementById('f-nome').value.trim(),
                 categoria: document.getElementById('f-categoria').value.trim(),
                 unidade: document.getElementById('f-unidade').value,
                 quantidadeAtual: Number(document.getElementById('f-qtd').value) || 0,
                 quantidadeMinima: Number(document.getElementById('f-qtd-min').value) || 0,
-                custoUnitario: Number(document.getElementById('f-custo').value) || 0,
+                quantidadeCompra, custoCompra,
+                custoUnitario: custoCompra / quantidadeCompra,
                 fornecedor: document.getElementById('f-fornecedor').value.trim(),
                 updatedAt: firebase.firestore.FieldValue.serverTimestamp()
             };
