@@ -41,7 +41,7 @@ const Storefront = (() => {
         <div class="store-page" id="store-top">
             <header class="store-header">
                 <div class="store-header-inner">
-                    <div class="store-logo brand-font">Vallê<span>DOCES</span></div>
+                    <img src="img/logo.png?v=3" alt="Vallê Doces" class="store-logo-img">
                     <nav class="store-nav">
                         <a href="#store-top">Início</a>
                         <a href="#store-produtos">Cardápio</a>
@@ -146,7 +146,7 @@ const Storefront = (() => {
 
             <footer class="store-footer" id="store-contato">
                 <div class="store-footer-col store-footer-brand">
-                    <div class="store-logo brand-font">Vallê<span>DOCES</span></div>
+                    <img src="img/logo.png?v=3" alt="Vallê Doces" class="store-logo-img">
                     <p>Doces artesanais feitos com amor para adoçar os seus melhores momentos.</p>
                 </div>
                 <div class="store-footer-col">
