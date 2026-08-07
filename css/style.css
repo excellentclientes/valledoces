@@ -570,11 +570,12 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-page.has-fundo .store-header,
 .store-page.has-fundo .store-features,
 .store-page.has-fundo .store-benefits,
+.store-page.has-fundo .store-section,
+.store-page.has-fundo .store-insta,
 .store-page.has-fundo .store-card,
 .store-page.has-fundo .store-newsletter,
 .store-page.has-fundo .store-cart-drawer,
-.store-page.has-fundo .store-account-pop,
-.store-page.has-fundo .store-pay-badge {
+.store-page.has-fundo .store-account-pop {
     --text-main: #3E2A1E; --text-body: #6B5847; --text-muted: #9C8C7D;
 }
 
@@ -644,7 +645,10 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-feature strong { display: block; font-size: 0.92rem; color: var(--text-main); margin-bottom: 4px; }
 .store-feature span { font-size: 0.78rem; color: var(--text-muted); }
 
-.store-section { max-width: 1180px; margin: 0 auto; padding: 20px 24px 60px; }
+.store-section {
+    max-width: 1180px; margin: 0 auto 40px; padding: 30px 24px 34px;
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
 .store-section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
 .store-section-head h2 { font-family: 'Fredoka', sans-serif; font-size: 1.35rem; color: var(--text-main); }
 
@@ -684,7 +688,7 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-banner-cta .btn { padding: 14px 30px; font-size: 0.95rem; border-radius: 999px; box-shadow: 0 10px 24px rgba(0,0,0,0.28); }
 
 .store-benefits {
-    max-width: 1180px; margin: 0 auto 60px; padding: 30px 24px;
+    max-width: 1180px; margin: 0 auto 40px; padding: 30px 24px;
     background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
     display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center;
 }
@@ -692,7 +696,10 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-benefits strong { display: block; font-size: 0.88rem; color: var(--text-main); }
 .store-benefits span { font-size: 0.76rem; color: var(--text-muted); }
 
-.store-insta { max-width: 1180px; margin: 0 auto 60px; padding: 0 24px; }
+.store-insta {
+    max-width: 1180px; margin: 0 auto 40px; padding: 30px 24px;
+    background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm);
+}
 .store-insta .store-section-head h2 { font-family: 'Fredoka', sans-serif; font-size: 1.2rem; margin-bottom: 3px; }
 .store-insta-handle { font-size: 0.82rem; color: var(--orange-600); font-weight: 600; }
 .store-insta-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 16px; }
@@ -714,11 +721,8 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-newsletter button { width: 46px; height: 46px; border-radius: 50%; border: none; background: var(--orange-500); color: #fff; cursor: pointer; font-size: 1rem; flex-shrink: 0; }
 .store-newsletter button:hover { background: var(--orange-600); }
 
-.store-footer {
-    max-width: 1180px; margin: 20px auto 30px; padding: 40px 32px;
-    background: var(--brown-900); border-radius: var(--radius-lg);
-    display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 30px;
-}
+.store-footer { width: 100%; margin-top: 40px; padding: 44px 24px 0; background: var(--brown-900); }
+.store-footer-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 30px; }
 .store-footer-col { display: flex; flex-direction: column; gap: 9px; }
 .store-footer-col strong { color: #fff; font-size: 0.9rem; margin-bottom: 4px; }
 .store-footer-col span { font-size: 0.83rem; color: rgba(255,255,255,0.7); }
@@ -726,9 +730,12 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-pay-icons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px; }
 .store-pay-badge {
     display: inline-flex; align-items: center; justify-content: center; padding: 6px 10px; border-radius: 6px;
-    background: var(--surface-soft); border: 1px solid var(--border); font-size: 0.72rem; font-weight: 700; color: var(--text-body); min-width: 40px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); font-size: 0.72rem; font-weight: 700; color: #fff; min-width: 40px;
 }
-.store-copy { text-align: center; font-size: 0.75rem; color: var(--text-muted); padding: 0 24px 30px; }
+.store-copy {
+    max-width: 1180px; margin: 30px auto 0; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.55);
+    padding: 20px 24px 30px; border-top: 1px solid rgba(255,255,255,0.12);
+}
 
 .store-cart-backdrop { position: fixed; inset: 0; background: rgba(62,42,30,0.45); z-index: 8100; display: none; }
 .store-cart-backdrop.open { display: block; }
