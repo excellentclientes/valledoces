@@ -153,12 +153,9 @@ const Produtos = (() => {
                     docId = ref.id;
                 }
                 const file = document.getElementById('f-foto').files[0];
-                if (file && window.storage) {
-                    const path = `produtos/${docId}/${Date.now()}_${file.name}`;
-                    const ref = window.storage.ref().child(path);
-                    await ref.put(file);
-                    const url = await ref.getDownloadURL();
-                    await window.db.collection('produtos').doc(docId).update({ imagemUrl: url });
+                if (file) {
+                    const imagemUrl = await Utils.compressImageToBase64(file, { maxDim: 1000, maxBytes: 450000 });
+                    await window.db.collection('produtos').doc(docId).update({ imagemUrl });
                 }
                 Utils.closeModal();
                 Utils.toast(p ? 'Produto atualizado.' : 'Produto cadastrado.', 'success');

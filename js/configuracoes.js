@@ -5,7 +5,7 @@
 const Configuracoes = (() => {
 
     let activeTab = 'loja';
-    let profilePhotoFile = null;
+    let profilePhotoDataUrl = null;
 
     function mount() {
         const el = document.getElementById('view-configuracoes');
@@ -131,20 +131,26 @@ const Configuracoes = (() => {
 
         document.getElementById('capa-input').addEventListener('change', uploadCapa);
 
-        document.getElementById('conta-foto-input').addEventListener('change', (e) => {
+        document.getElementById('conta-foto-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            profilePhotoFile = file;
-            const reader = new FileReader();
-            reader.onload = () => { document.getElementById('conta-avatar').innerHTML = `<img src="${reader.result}" style="width:100%;height:100%;object-fit:cover;">`; };
-            reader.readAsDataURL(file);
+            const avatar = document.getElementById('conta-avatar');
+            const original = avatar.innerHTML;
+            avatar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                profilePhotoDataUrl = await Utils.compressImageToBase64(file, { maxDim: 500, maxBytes: 350000 });
+                avatar.innerHTML = `<img src="${profilePhotoDataUrl}" style="width:100%;height:100%;object-fit:cover;">`;
+            } catch (err) {
+                Utils.toast('Não foi possível usar essa foto: ' + err.message, 'error');
+                avatar.innerHTML = original;
+            }
         });
 
         el.addEventListener('click', (e) => {
             const rm = e.target.closest('.js-chip-remove');
             const rmCapa = e.target.closest('.js-capa-remove');
             if (rm) removeChip(rm.dataset.field, rm.dataset.value);
-            if (rmCapa) removeCapa(rmCapa.dataset.url);
+            if (rmCapa) removeCapa(rmCapa.dataset.id);
         });
 
         document.getElementById('btn-reset-senha').addEventListener('click', async () => {
@@ -184,14 +190,8 @@ const Configuracoes = (() => {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
         try {
-            let fotoUrl = Store.profile.fotoUrl || '';
-            if (profilePhotoFile && window.storage) {
-                const path = `usuarios/${user.uid}/${Date.now()}_${profilePhotoFile.name}`;
-                const ref = window.storage.ref().child(path);
-                await ref.put(profilePhotoFile);
-                fotoUrl = await ref.getDownloadURL();
-                profilePhotoFile = null;
-            }
+            const fotoUrl = profilePhotoDataUrl || Store.profile.fotoUrl || '';
+            profilePhotoDataUrl = null;
             await window.db.collection('usuarios').doc(user.uid).set({
                 nome: document.getElementById('f-perfil-nome').value.trim() || 'Administradora',
                 telefone: document.getElementById('f-perfil-telefone').value.trim(),
@@ -209,17 +209,15 @@ const Configuracoes = (() => {
 
     async function uploadCapa(e) {
         const file = e.target.files[0];
-        if (!file || !window.storage) return;
+        if (!file) return;
         const status = document.getElementById('capa-uploading');
         status.style.display = 'inline';
         try {
-            const path = `capas/${Date.now()}_${file.name}`;
-            const ref = window.storage.ref().child(path);
-            await ref.put(file);
-            const url = await ref.getDownloadURL();
-            await window.db.collection('configuracoes').doc('geral').set({
-                capas: firebase.firestore.FieldValue.arrayUnion(url)
-            }, { merge: true });
+            const imagem = await Utils.compressImageToBase64(file, { maxDim: 1100, maxBytes: 260000 });
+            await window.db.collection('capas').add({
+                imagem,
+                criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+            });
             Utils.toast('Foto de capa adicionada.', 'success');
         } catch (err) {
             Utils.toast('Erro ao enviar foto: ' + err.message, 'error');
@@ -229,23 +227,21 @@ const Configuracoes = (() => {
         }
     }
 
-    async function removeCapa(url) {
+    async function removeCapa(id) {
         Utils.confirmDialog('Remover esta foto da capa da loja?', async () => {
             try {
-                await window.db.collection('configuracoes').doc('geral').update({
-                    capas: firebase.firestore.FieldValue.arrayRemove(url)
-                });
+                await window.db.collection('capas').doc(id).delete();
                 Utils.toast('Foto removida.', 'success');
             } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
-        }, 'Remover foto');
+        }, 'Remover foto', 'Sim, remover');
     }
 
     function capaGridHtml(capas) {
         if (!capas || !capas.length) return '<span style="font-size:0.82rem;color:var(--text-muted);">Nenhuma foto de capa ainda.</span>';
-        return capas.map(url => `
+        return capas.map(c => `
             <div class="capa-thumb">
-                <img src="${url}">
-                <button class="js-capa-remove" data-url="${Utils.escapeHtml(url)}" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                <img src="${c.imagem}">
+                <button class="js-capa-remove" data-id="${c.id}" title="Remover"><i class="fa-solid fa-trash"></i></button>
             </div>
         `).join('');
     }
@@ -289,7 +285,7 @@ const Configuracoes = (() => {
         document.getElementById('f-endereco-loja').value = c.endereco || '';
         document.getElementById('f-taxa-padrao').value = c.taxaEntregaPadrao || 0;
 
-        document.getElementById('capa-grid').innerHTML = capaGridHtml(c.capas);
+        document.getElementById('capa-grid').innerHTML = capaGridHtml(Store.capas);
         document.getElementById('chips-categorias').innerHTML = chipHtml('categoriasProdutos', c.categoriasProdutos);
         document.getElementById('chips-pagamento').innerHTML = chipHtml('formasPagamento', c.formasPagamento);
         document.getElementById('chips-usuarios').innerHTML = chipHtml('usuariosAutorizados', c.usuariosAutorizados);

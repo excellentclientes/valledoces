@@ -7,6 +7,7 @@ const Storefront = (() => {
 
     let produtos = [];
     let config = {};
+    let capas = [];
     let cart = [];
     let catFilter = '';
     let searchTerm = '';
@@ -256,6 +257,10 @@ const Storefront = (() => {
             config = snap.exists ? snap.data() : {};
             renderFooter();
         }, err => console.error('storefront config', err)));
+        unsubs.push(window.db.collection('capas').orderBy('criadoEm').onSnapshot(snap => {
+            capas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderHero();
+        }, err => console.error('storefront capas', err)));
     }
 
     function render() {
@@ -297,7 +302,6 @@ const Storefront = (() => {
     function renderHero() {
         const wrap = document.getElementById('store-hero-art-wrap');
         if (!wrap) return;
-        const capas = config.capas || [];
         if (!capas.length) {
             stopCarousel();
             wrap.innerHTML = `<div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div><div class="store-hero-badge"><span>Novidade</span></div>`;
@@ -306,7 +310,7 @@ const Storefront = (() => {
         wrap.innerHTML = `
             <div class="store-hero-carousel">
                 <div class="store-hero-carousel-track" id="store-hero-track">
-                    ${capas.map(url => `<div class="store-hero-slide"><img src="${url}" alt=""></div>`).join('')}
+                    ${capas.map(c => `<div class="store-hero-slide"><img src="${c.imagem}" alt=""></div>`).join('')}
                 </div>
                 ${capas.length > 1 ? `<div class="store-hero-dots" id="store-hero-dots">${capas.map((_, i) => `<span class="store-hero-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
             </div>

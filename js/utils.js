@@ -196,10 +196,50 @@ const Utils = (() => {
         });
     });
 
+    // Redimensiona e comprime uma imagem no navegador, retornando um data URL
+    // (base64) pronto para salvar direto num campo do Firestore — evita
+    // depender do Firebase Storage (que em projetos novos exige plano pago).
+    function compressImageToBase64(file, opts = {}) {
+        const maxDim = opts.maxDim || 900;
+        const maxBytes = opts.maxBytes || 400000;
+        const startQuality = opts.quality || 0.8;
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
+            reader.onload = () => {
+                const img = new Image();
+                img.onerror = () => reject(new Error('Arquivo de imagem inválido.'));
+                img.onload = () => {
+                    let { width, height } = img;
+                    if (width > maxDim || height > maxDim) {
+                        if (width >= height) { height = Math.round(height * maxDim / width); width = maxDim; }
+                        else { width = Math.round(width * maxDim / height); height = maxDim; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#fff';
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    let q = startQuality;
+                    let dataUrl = canvas.toDataURL('image/jpeg', q);
+                    while (dataUrl.length > maxBytes && q > 0.35) {
+                        q -= 0.1;
+                        dataUrl = canvas.toDataURL('image/jpeg', q);
+                    }
+                    resolve(dataUrl);
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
     return {
         formatBRL, formatDateBR, formatDateShort, formatDateTimeBR, todayKey, toDate,
         escapeHtml, debounce, uid, toast, openModal, closeModal, confirmDialog,
         statusBadge, STATUS_LABELS,
-        selectHtml, refreshSelectOptions, setSelectValue
+        selectHtml, refreshSelectOptions, setSelectValue,
+        compressImageToBase64
     };
 })();

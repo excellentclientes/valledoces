@@ -4,7 +4,7 @@
    ========================================================================== */
 
 const Store = {
-    clientes: [], produtos: [], pedidos: [], estoque: [], financeiro: [], producao: [], receitas: [],
+    clientes: [], produtos: [], pedidos: [], estoque: [], financeiro: [], producao: [], receitas: [], capas: [],
     profile: {},
     config: {
         nomeLoja: 'Vallê Doces',
@@ -61,6 +61,11 @@ function initStoreListeners() {
         Store.emit('receitas');
     }, err => console.error('receitas', err)));
 
+    _unsubscribers.push(db.collection('capas').orderBy('criadoEm').onSnapshot(snap => {
+        Store.capas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        Store.emit('capas');
+    }, err => console.error('capas', err)));
+
     _unsubscribers.push(db.collection('configuracoes').doc('geral').onSnapshot(snap => {
         if (snap.exists) {
             Store.config = { ...Store.config, ...snap.data() };
@@ -75,7 +80,7 @@ function teardownStoreListeners() {
     _unsubscribers.forEach(u => { try { u(); } catch (e) {} });
     _unsubscribers = [];
     Store.clientes = []; Store.produtos = []; Store.pedidos = []; Store.estoque = [];
-    Store.financeiro = []; Store.producao = []; Store.receitas = [];
+    Store.financeiro = []; Store.producao = []; Store.receitas = []; Store.capas = [];
 }
 
 let _profileUnsub = null;
@@ -206,6 +211,7 @@ function bindStoreSubscriptions() {
     Store.on('producao', () => Producao.render());
     Store.on('receitas', () => Precificacao.render());
     Store.on('config', () => { Configuracoes.render(); Pedidos.render(); updateGreeting(); refreshSidebarUser(); });
+    Store.on('capas', () => Configuracoes.render());
     Store.on('profile', () => { updateGreeting(); refreshSidebarUser(); Configuracoes.render(); });
     Store.on('*', () => Relatorios.render());
 }

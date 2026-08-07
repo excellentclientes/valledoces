@@ -7,7 +7,6 @@ const Onboarding = (() => {
     let step = 1;
     let currentUser = null;
     let onDone = null;
-    let photoFile = null;
     let chosenPhotoUrl = null;
     let data = { nome: '', telefone: '' };
     let mode = 'admin'; // 'admin' -> usuarios/{uid} | 'cliente' -> clientes/{uid}
@@ -27,7 +26,6 @@ const Onboarding = (() => {
             console.error('onboarding check', err);
         }
         step = 1;
-        photoFile = null;
         chosenPhotoUrl = user.photoURL || null;
         data = { nome: user.displayName || '', telefone: '' };
         document.getElementById('onboarding-screen').style.display = 'flex';
@@ -104,16 +102,18 @@ const Onboarding = (() => {
         const photoInput = document.getElementById('onboard-photo-input');
 
         if (photoInput) {
-            photoInput.addEventListener('change', (e) => {
+            photoInput.addEventListener('change', async (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
-                photoFile = file;
-                const reader = new FileReader();
-                reader.onload = () => {
-                    chosenPhotoUrl = reader.result;
-                    document.getElementById('onboard-avatar-preview').innerHTML = `<img src="${reader.result}" alt="">`;
-                };
-                reader.readAsDataURL(file);
+                const preview = document.getElementById('onboard-avatar-preview');
+                preview.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                try {
+                    chosenPhotoUrl = await Utils.compressImageToBase64(file, { maxDim: 500, maxBytes: 350000 });
+                    preview.innerHTML = `<img src="${chosenPhotoUrl}" alt="">`;
+                } catch (err) {
+                    Utils.toast('Não foi possível usar essa foto: ' + err.message, 'error');
+                    preview.innerHTML = avatarPreviewHtml();
+                }
             });
         }
         if (skipBtn) skipBtn.addEventListener('click', () => { step = 2; render(); });
@@ -148,13 +148,7 @@ const Onboarding = (() => {
         btn.disabled = true;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
         try {
-            let fotoUrl = currentUser.photoURL || '';
-            if (photoFile && window.storage) {
-                const path = `usuarios/${currentUser.uid}/${Date.now()}_${photoFile.name}`;
-                const ref = window.storage.ref().child(path);
-                await ref.put(photoFile);
-                fotoUrl = await ref.getDownloadURL();
-            }
+            const fotoUrl = chosenPhotoUrl || currentUser.photoURL || '';
             const payload = {
                 nome: data.nome,
                 telefone: data.telefone,
