@@ -49,7 +49,6 @@ body, input, select, textarea, button {
     font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-.brand-font { font-family: 'Fredoka', 'Inter', sans-serif; }
 
 html, body {
     height: 100%;
@@ -102,13 +101,9 @@ ul { list-style: none; }
 .login-left-inner { position: relative; z-index: 1; text-align: center; padding: 40px; animation: floatLogo 6s ease-in-out infinite; }
 @keyframes floatLogo { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
 
-.brand-logo-big {
-    font-size: 4.6rem; font-weight: 600; color: #fff; line-height: 1;
-    text-shadow: 3px 3px 0 rgba(0,0,0,0.18), 0 14px 34px rgba(0,0,0,0.28);
-}
-.brand-logo-big .sub {
-    display: block; font-size: 1.05rem; letter-spacing: 7px; font-weight: 600;
-    color: rgba(255,255,255,0.9); margin-top: 10px;
+.brand-logo-img {
+    width: 340px; max-width: 80vw; height: auto;
+    filter: drop-shadow(3px 8px 0 rgba(0,0,0,0.12)) drop-shadow(0 14px 34px rgba(0,0,0,0.28));
 }
 .login-left-tag { color: rgba(255,255,255,0.88); margin-top: 20px; font-size: 0.95rem; max-width: 300px; margin-left: auto; margin-right: auto; }
 
@@ -117,7 +112,7 @@ ul { list-style: none; }
     padding: 40px 32px; background: var(--surface); box-shadow: -24px 0 60px rgba(62,42,30,0.06);
 }
 .login-card { width: 100%; max-width: 340px; }
-.login-brand-name { display: none; text-align: center; font-size: 1.8rem; color: var(--orange-600); margin-bottom: 4px; }
+.login-brand-name { display: none; width: 190px; height: auto; margin: 0 auto 4px; }
 
 .auth-panel { animation: fadeIn 0.25s ease; }
 .auth-heading { font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px; }
@@ -204,15 +199,7 @@ ul { list-style: none; }
     background: linear-gradient(160deg, var(--orange-50), var(--surface));
     border-bottom: 1px solid var(--border);
 }
-.sidebar-brand .logo-text {
-    font-family: 'Fredoka', sans-serif; font-size: 1.7rem; font-weight: 600; color: var(--orange-500);
-    text-shadow: 1px 1px 0 var(--brown-900);
-    line-height: 1;
-}
-.sidebar-brand .logo-sub {
-    font-family: 'Fredoka', sans-serif; font-size: 0.75rem; letter-spacing: 3px;
-    color: var(--brown-700); margin-top: 2px;
-}
+.sidebar-brand-img { width: 150px; height: auto; }
 .sidebar-brand .logo-tag { font-size: 0.68rem; color: var(--text-muted); margin-top: 6px; }
 
 .nav-links { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 3px; }
@@ -580,8 +567,8 @@ td.strong { color: var(--text-main); font-weight: 600; }
 
 .store-header { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
 .store-header-inner { max-width: 1180px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
-.store-logo { font-family: 'Fredoka', sans-serif; font-size: 1.3rem; font-weight: 600; color: var(--orange-500); display: flex; align-items: baseline; gap: 6px; }
-.store-logo span { font-size: 0.6rem; letter-spacing: 2px; color: var(--brown-700); }
+.store-logo-img { height: 38px; width: auto; display: block; }
+.store-footer-brand .store-logo-img { height: 34px; width: auto; align-self: flex-start; margin-bottom: 10px; }
 .store-nav { display: flex; gap: 26px; }
 .store-nav a { color: var(--text-body); font-weight: 600; font-size: 0.9rem; }
 .store-nav a:hover { color: var(--orange-600); }
