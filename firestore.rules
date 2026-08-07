@@ -10,6 +10,9 @@ rules_version = '2';
 //   em configuracoes/geral.
 // - Cada usuário só lê/edita o próprio perfil (usuarios/{uid}); admins
 //   também podem ler todos os perfis.
+// - Clientes da loja virtual (não admins) têm um cadastro em
+//   clientes/{uid} (mesmo id do login) e podem criar pedidos próprios,
+//   que entram no mesmo fluxo do painel de gestão.
 //
 // Publique com: firebase deploy --only firestore:rules
 service cloud.firestore {
@@ -36,6 +39,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /configuracoes/contadores {
+      // usado para gerar o número sequencial do pedido (admin e loja virtual)
+      allow read, write: if signedIn();
+    }
+
     match /configuracoes/{doc} {
       allow read, write: if isAdmin();
     }
@@ -45,11 +53,30 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
-    match /clientes/{id} { allow read, write: if isAdmin(); }
-    match /pedidos/{id} { allow read, write: if isAdmin(); }
+    match /clientes/{id} {
+      allow read, write: if isAdmin();
+      // cliente da loja virtual cadastra/edita o próprio registro (doc id = uid)
+      allow read, write: if signedIn() && request.auth.uid == id;
+    }
+
+    match /pedidos/{id} {
+      allow read, update, delete: if isAdmin();
+      // qualquer pessoa logada pode criar seu próprio pedido pela loja virtual
+      allow create: if signedIn();
+      allow read: if signedIn() && resource.data.clienteId == request.auth.uid;
+    }
+
+    match /financeiro/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if signedIn();
+    }
+
+    match /producao/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if signedIn();
+    }
+
     match /estoque/{id} { allow read, write: if isAdmin(); }
-    match /financeiro/{id} { allow read, write: if isAdmin(); }
-    match /producao/{id} { allow read, write: if isAdmin(); }
     match /receitas/{id} { allow read, write: if isAdmin(); }
 
     match /newsletter/{id} {

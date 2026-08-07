@@ -78,8 +78,21 @@ Quem faz login com um e-mail fora da lista (Google ou cadastro) não vê o paine
 direto numa **loja virtual pública**, com o catálogo de produtos ativos e um carrinho que
 finaliza o pedido pelo WhatsApp da loja (número configurado em Dados da loja).
 
-No primeiro login de um e-mail autorizado, o sistema pede nome, telefone e foto (opcional)
-antes de abrir o painel — é esse nome que aparece na saudação e na barra lateral.
+No primeiro login (autorizado ou não) o sistema pede nome, telefone e foto (opcional) antes
+de continuar. Para e-mails autorizados isso vira o perfil do painel (`usuarios/{uid}`); para
+clientes da loja virtual, vira um cadastro em `clientes/{uid}` — ou seja, cada pessoa que faz
+login na loja já entra automaticamente como cliente no CRM do painel. Ao finalizar uma compra,
+a loja cria um pedido de verdade (mesma coleção `pedidos` usada pelo painel, com o `clienteId`
+apontando pra esse cadastro), lançamento em Financeiro e itens em Produção — então as compras
+feitas pela loja aparecem no Kanban de Pedidos, nas estatísticas de Clientes, no Financeiro e
+no Dashboard, junto com os pedidos criados manualmente pelo painel.
+
+> Pedidos feitos pela loja virtual não abatem automaticamente o estoque de ingredientes —
+> só os pedidos lançados pelo painel fazem isso hoje, pra evitar dar a uma conta de cliente
+> qualquer permissão de alterar estoque/preço no banco.
+
+A capa da loja (Configurações → Capa da loja) aceita quantas fotos você quiser. Com 2 ou mais,
+elas aparecem na página inicial da loja como um carrossel, avançando sozinho a cada 3 segundos.
 
 ## Publicar (Firebase Hosting)
 
