@@ -8,6 +8,7 @@ const Storefront = (() => {
     let produtos = [];
     let config = {};
     let capas = [];
+    let instaCards = [];
     let cart = [];
     let catFilter = '';
     let searchTerm = '';
@@ -114,7 +115,7 @@ const Storefront = (() => {
                         <span class="store-insta-handle" id="store-insta-handle">@valledoces</span>
                     </div>
                 </div>
-                <div class="store-insta-grid">
+                <div class="store-insta-grid" id="store-insta-grid">
                     ${[0, 1, 2, 3, 4].map(() => `<div class="store-insta-tile"><i class="fa-solid fa-cookie-bite"></i></div>`).join('')}
                 </div>
             </section>
@@ -248,6 +249,10 @@ const Storefront = (() => {
             capas = snap.docs.map(d => ({ id: d.id, ...d.data() }));
             renderHero();
         }, err => console.error('storefront capas', err)));
+        unsubs.push(window.db.collection('instaCards').orderBy('criadoEm').onSnapshot(snap => {
+            instaCards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderInstaCards();
+        }, err => console.error('storefront instaCards', err)));
     }
 
     function render() {
@@ -327,6 +332,24 @@ const Storefront = (() => {
         const cta = `<div class="store-banner-cta"><a href="#store-produtos" class="btn btn-primary">Quero presentear</a></div>`;
         const media = config.bannerMeio ? `<img src="${config.bannerMeio}" alt="">` : `<i class="fa-solid fa-gift"></i>`;
         wrap.innerHTML = media + cta;
+    }
+
+    function renderInstaCards() {
+        const box = document.getElementById('store-insta-grid');
+        if (!box) return;
+        if (!instaCards.length) {
+            box.innerHTML = [0, 1, 2, 3, 4].map(() => `<div class="store-insta-tile"><i class="fa-solid fa-cookie-bite"></i></div>`).join('');
+            return;
+        }
+        box.innerHTML = instaCards.map(c => `
+            <a class="store-insta-card" href="${Utils.escapeHtml(c.link || '#')}" target="_blank" rel="noopener">
+                <div class="store-insta-card-img"><img src="${c.imagem}" alt=""></div>
+                ${(c.titulo || c.texto) ? `<div class="store-insta-card-body">
+                    ${c.titulo ? `<strong>${Utils.escapeHtml(c.titulo)}</strong>` : ''}
+                    ${c.texto ? `<p>${Utils.escapeHtml(c.texto)}</p>` : ''}
+                </div>` : ''}
+            </a>
+        `).join('');
     }
 
     function renderCats() {

@@ -102,7 +102,7 @@ const Configuracoes = (() => {
                     <span id="fundoloja-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                 </div>
 
-                <div class="panel" style="max-width:680px;">
+                <div class="panel" style="max-width:680px;margin-bottom:20px;">
                     <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo do painel administrativo</h3>
                     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
                         Imagem de fundo só do painel de gestão (esta tela que você está vendo agora),
@@ -114,6 +114,19 @@ const Configuracoes = (() => {
                         <input type="file" id="fundo-input" accept="image/*" style="display:none;">
                     </label>
                     <span id="fundo-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
+                </div>
+
+                <div class="panel" style="max-width:680px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:4px;">Cards do Instagram</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+                        Adicione quantos cards quiser para a seção "Siga nosso Instagram" da loja.
+                        Cada card tem foto, título e texto opcionais, e um link — ao clicar, a pessoa
+                        é levada direto para o post (ou qualquer link que você colocar).
+                    </p>
+                    <div class="capa-grid" id="insta-card-grid"></div>
+                    <button type="button" class="btn btn-outline btn-sm" id="btn-add-insta-card" style="margin-top:14px;">
+                        <i class="fa-solid fa-plus"></i> Adicionar card
+                    </button>
                 </div>
             </div>
 
@@ -179,6 +192,7 @@ const Configuracoes = (() => {
         document.getElementById('banner-input').addEventListener('change', uploadBanner);
         document.getElementById('fundo-input').addEventListener('change', uploadFundoPainel);
         document.getElementById('fundoloja-input').addEventListener('change', uploadFundoLoja);
+        document.getElementById('btn-add-insta-card').addEventListener('click', () => openInstaCardForm());
 
         document.getElementById('conta-foto-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -201,11 +215,15 @@ const Configuracoes = (() => {
             const rmBanner = e.target.closest('.js-banner-remove');
             const rmFundo = e.target.closest('.js-fundo-remove');
             const rmFundoLoja = e.target.closest('.js-fundoloja-remove');
+            const editInsta = e.target.closest('.js-insta-edit');
+            const rmInsta = e.target.closest('.js-insta-remove');
             if (rm) removeChip(rm.dataset.field, rm.dataset.value);
             if (rmCapa) removeCapa(rmCapa.dataset.id);
             if (rmBanner) removeBanner();
             if (rmFundo) removeFundoPainel();
             if (rmFundoLoja) removeFundoLoja();
+            if (editInsta) openInstaCardForm(editInsta.dataset.id);
+            if (rmInsta) removeInstaCard(rmInsta.dataset.id);
         });
 
         document.getElementById('btn-reset-senha').addEventListener('click', async () => {
@@ -415,6 +433,100 @@ const Configuracoes = (() => {
         `;
     }
 
+    function openInstaCardForm(id) {
+        const c = id ? Store.instaCards.find(x => x.id === id) : null;
+        let novaImagem = null;
+        Utils.openModal(`
+            <div class="modal-head"><h3>${c ? 'Editar card' : 'Novo card do Instagram'}</h3><button class="modal-close" onclick="Utils.closeModal()"><i class="fa-solid fa-xmark"></i></button></div>
+            <form id="insta-card-form">
+                <div class="form-group">
+                    <label>Imagem ${c ? '' : '*'}</label>
+                    <div class="insta-form-preview" id="insta-card-preview">
+                        ${c && c.imagem ? `<img src="${c.imagem}">` : '<i class="fa-solid fa-image" style="color:var(--text-muted);font-size:1.6rem;"></i>'}
+                    </div>
+                    <label class="btn btn-outline btn-sm" style="cursor:pointer;display:inline-flex;">
+                        <i class="fa-solid fa-upload"></i> ${c ? 'Trocar imagem' : 'Escolher imagem'}
+                        <input type="file" id="insta-card-input" accept="image/*" style="display:none;">
+                    </label>
+                </div>
+                <div class="form-group"><label>Título</label><input type="text" id="f-insta-titulo" value="${c ? Utils.escapeHtml(c.titulo || '') : ''}" placeholder="Ex: Caixa surpresa de morango"></div>
+                <div class="form-group"><label>Texto</label><textarea id="f-insta-texto" rows="2" placeholder="Um textinho curto sobre o post">${c ? Utils.escapeHtml(c.texto || '') : ''}</textarea></div>
+                <div class="form-group"><label>Link do post *</label><input type="url" id="f-insta-link" required value="${c ? Utils.escapeHtml(c.link || '') : ''}" placeholder="https://www.instagram.com/p/..."></div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-outline" onclick="Utils.closeModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" id="insta-card-submit"><i class="fa-solid fa-check"></i> Salvar</button>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('insta-card-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const preview = document.getElementById('insta-card-preview');
+            const original = preview.innerHTML;
+            preview.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            try {
+                novaImagem = await Utils.compressImageToBase64(file, { maxDim: 900, maxBytes: 300000 });
+                preview.innerHTML = `<img src="${novaImagem}">`;
+            } catch (err) {
+                Utils.toast('Não foi possível usar essa imagem: ' + err.message, 'error');
+                preview.innerHTML = original;
+            }
+        });
+
+        document.getElementById('insta-card-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!novaImagem && !(c && c.imagem)) { Utils.toast('Escolha uma imagem para o card.', 'error'); return; }
+            const btn = document.getElementById('insta-card-submit');
+            btn.disabled = true;
+            try {
+                const data = {
+                    titulo: document.getElementById('f-insta-titulo').value.trim(),
+                    texto: document.getElementById('f-insta-texto').value.trim(),
+                    link: document.getElementById('f-insta-link').value.trim()
+                };
+                if (novaImagem) data.imagem = novaImagem;
+                if (c) {
+                    await window.db.collection('instaCards').doc(c.id).update(data);
+                } else {
+                    data.criadoEm = firebase.firestore.FieldValue.serverTimestamp();
+                    await window.db.collection('instaCards').add(data);
+                }
+                Utils.closeModal();
+                Utils.toast(c ? 'Card atualizado.' : 'Card adicionado.', 'success');
+            } catch (err) {
+                Utils.toast('Erro ao salvar: ' + err.message, 'error');
+                btn.disabled = false;
+            }
+        });
+    }
+
+    async function removeInstaCard(id) {
+        Utils.confirmDialog('Remover este card do Instagram?', async () => {
+            try {
+                await window.db.collection('instaCards').doc(id).delete();
+                Utils.toast('Card removido.', 'success');
+            } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
+        }, 'Remover card', 'Sim, remover');
+    }
+
+    function instaCardGridHtml(cards) {
+        if (!cards || !cards.length) return '<span style="font-size:0.82rem;color:var(--text-muted);">Nenhum card adicionado ainda — a loja mostra os quadradinhos decorativos padrão.</span>';
+        return cards.map(c => `
+            <div class="insta-card-admin">
+                <div class="insta-card-admin-img">${c.imagem ? `<img src="${c.imagem}">` : ''}</div>
+                <div class="insta-card-admin-body">
+                    <strong>${Utils.escapeHtml(c.titulo || '(sem título)')}</strong>
+                    <span>${Utils.escapeHtml(c.link || '')}</span>
+                </div>
+                <div class="insta-card-admin-actions">
+                    <button class="js-insta-edit" data-id="${c.id}" title="Editar"><i class="fa-solid fa-pen"></i></button>
+                    <button class="js-insta-remove del" data-id="${c.id}" title="Remover"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
     async function addChip(field, inputId, isEmail = false) {
         const input = document.getElementById(inputId);
         let value = input.value.trim();
@@ -458,6 +570,7 @@ const Configuracoes = (() => {
         document.getElementById('banner-grid').innerHTML = bannerGridHtml(c.bannerMeio);
         document.getElementById('fundo-grid').innerHTML = fundoGridHtml(c.fundoPainel);
         document.getElementById('fundoloja-grid').innerHTML = fundoLojaGridHtml(c.fundoLoja);
+        document.getElementById('insta-card-grid').innerHTML = instaCardGridHtml(Store.instaCards);
         document.getElementById('chips-categorias').innerHTML = chipHtml('categoriasProdutos', c.categoriasProdutos);
         document.getElementById('chips-pagamento').innerHTML = chipHtml('formasPagamento', c.formasPagamento);
         document.getElementById('chips-usuarios').innerHTML = chipHtml('usuariosAutorizados', c.usuariosAutorizados);
