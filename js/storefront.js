@@ -74,7 +74,6 @@ const Storefront = (() => {
 
             <section class="store-hero">
                 <div class="store-hero-media" id="store-hero-art-wrap"></div>
-                <a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a>
             </section>
 
             <section class="store-features">
@@ -100,7 +99,6 @@ const Storefront = (() => {
 
             <section class="store-banner" id="store-kits">
                 <div class="store-banner-media" id="store-banner-media"></div>
-                <a href="#store-produtos" class="btn btn-primary">Quero presentear</a>
             </section>
 
             <section class="store-benefits" id="store-sobre">
@@ -289,9 +287,10 @@ const Storefront = (() => {
     function renderHero() {
         const wrap = document.getElementById('store-hero-art-wrap');
         if (!wrap) return;
+        const cta = `<div class="store-hero-cta"><a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a></div>`;
         if (!capas.length) {
             stopCarousel();
-            wrap.innerHTML = `<div class="store-hero-placeholder"><i class="fa-solid fa-cookie-bite"></i></div>`;
+            wrap.innerHTML = `<div class="store-hero-placeholder"><i class="fa-solid fa-cookie-bite"></i></div>${cta}`;
             return;
         }
         wrap.innerHTML = `
@@ -301,6 +300,7 @@ const Storefront = (() => {
                 </div>
                 ${capas.length > 1 ? `<div class="store-hero-dots" id="store-hero-dots">${capas.map((_, i) => `<span class="store-hero-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
             </div>
+            ${cta}
         `;
         startCarousel(capas.length);
     }
@@ -308,9 +308,9 @@ const Storefront = (() => {
     function renderBanner() {
         const wrap = document.getElementById('store-banner-media');
         if (!wrap) return;
-        wrap.innerHTML = config.bannerMeio
-            ? `<img src="${config.bannerMeio}" alt="">`
-            : `<i class="fa-solid fa-gift"></i>`;
+        const cta = `<div class="store-banner-cta"><a href="#store-produtos" class="btn btn-primary">Quero presentear</a></div>`;
+        const media = config.bannerMeio ? `<img src="${config.bannerMeio}" alt="">` : `<i class="fa-solid fa-gift"></i>`;
+        wrap.innerHTML = media + cta;
     }
 
     function renderCats() {
