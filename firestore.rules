@@ -40,6 +40,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /instaCards/{id} {
+      // cards da seção "Siga nosso Instagram" (imagem, título, texto, link)
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /configuracoes/geral {
       allow read: if true;
       allow write: if isAdmin();
