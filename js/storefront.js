@@ -131,34 +131,36 @@ const Storefront = (() => {
             </section>
 
             <footer class="store-footer" id="store-contato">
-                <div class="store-footer-col store-footer-brand">
-                    <img src="img/logo.png?v=3" alt="Vallê Doces" class="store-logo-img">
-                    <p>Doces artesanais feitos com amor para adoçar os seus melhores momentos.</p>
-                </div>
-                <div class="store-footer-col">
-                    <strong>Institucional</strong>
-                    <span>Quem somos</span>
-                    <span>Como comprar</span>
-                    <span>Política de entrega</span>
-                    <span>Trocas e devoluções</span>
-                </div>
-                <div class="store-footer-col">
-                    <strong>Atendimento</strong>
-                    <span id="store-contato-tel"><i class="fa-brands fa-whatsapp"></i> —</span>
-                    <span id="store-contato-insta"><i class="fa-brands fa-instagram"></i> —</span>
-                    <span id="store-contato-end"><i class="fa-solid fa-location-dot"></i> —</span>
-                </div>
-                <div class="store-footer-col">
-                    <strong>Formas de pagamento</strong>
-                    <div class="store-pay-icons">
-                        <span class="store-pay-badge"><i class="fa-brands fa-cc-visa"></i></span>
-                        <span class="store-pay-badge"><i class="fa-brands fa-cc-mastercard"></i></span>
-                        <span class="store-pay-badge">Pix</span>
-                        <span class="store-pay-badge">Boleto</span>
+                <div class="store-footer-inner">
+                    <div class="store-footer-col store-footer-brand">
+                        <img src="img/logo.png?v=3" alt="Vallê Doces" class="store-logo-img">
+                        <p>Doces artesanais feitos com amor para adoçar os seus melhores momentos.</p>
+                    </div>
+                    <div class="store-footer-col">
+                        <strong>Institucional</strong>
+                        <span>Quem somos</span>
+                        <span>Como comprar</span>
+                        <span>Política de entrega</span>
+                        <span>Trocas e devoluções</span>
+                    </div>
+                    <div class="store-footer-col">
+                        <strong>Atendimento</strong>
+                        <span id="store-contato-tel"><i class="fa-brands fa-whatsapp"></i> —</span>
+                        <span id="store-contato-insta"><i class="fa-brands fa-instagram"></i> —</span>
+                        <span id="store-contato-end"><i class="fa-solid fa-location-dot"></i> —</span>
+                    </div>
+                    <div class="store-footer-col">
+                        <strong>Formas de pagamento</strong>
+                        <div class="store-pay-icons">
+                            <span class="store-pay-badge"><i class="fa-brands fa-cc-visa"></i></span>
+                            <span class="store-pay-badge"><i class="fa-brands fa-cc-mastercard"></i></span>
+                            <span class="store-pay-badge">Pix</span>
+                            <span class="store-pay-badge">Boleto</span>
+                        </div>
                     </div>
                 </div>
+                <p class="store-copy">© ${new Date().getFullYear()} Vallê Doces. Todos os direitos reservados.</p>
             </footer>
-            <p class="store-copy">© ${new Date().getFullYear()} Vallê Doces. Todos os direitos reservados.</p>
         </div>
 
         <div class="store-cart-backdrop" id="store-cart-backdrop"></div>
