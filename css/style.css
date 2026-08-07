@@ -498,6 +498,26 @@ td.strong { color: var(--text-main); font-weight: 600; }
     font-size: 0.88rem; background: var(--surface-soft); color: var(--text-main); outline: none; transition: 0.15s;
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--orange-500); background: #fff; box-shadow: 0 0 0 3px rgba(245,130,31,0.12); }
+
+/* Estiliza campos de data/mês/número nativos (fora de .form-group também,
+   ex.: filtros de data em Relatórios/Financeiro/Produção e Qtd. em
+   Precificação) para não ficarem com a cara padrão "antiga" do navegador. */
+input[type="date"], input[type="month"], input[type="number"] {
+    padding: 9px 12px; border: 1px solid var(--border); border-radius: 9px;
+    font-size: 0.85rem; font-family: inherit; background: var(--surface-soft);
+    color: var(--text-main); outline: none; transition: 0.15s;
+}
+input[type="date"], input[type="month"] { cursor: pointer; }
+input[type="date"]:hover, input[type="month"]:hover, input[type="number"]:hover { border-color: var(--orange-200); }
+input[type="date"]:focus, input[type="month"]:focus, input[type="number"]:focus {
+    border-color: var(--orange-500); background: #fff; box-shadow: 0 0 0 3px rgba(245,130,31,0.12);
+}
+input[type="date"]::-webkit-calendar-picker-indicator, input[type="month"]::-webkit-calendar-picker-indicator {
+    cursor: pointer; opacity: 0.6; transition: 0.15s; border-radius: 4px;
+}
+input[type="date"]:hover::-webkit-calendar-picker-indicator, input[type="month"]:hover::-webkit-calendar-picker-indicator { opacity: 1; }
+input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
 .form-actions { display: flex; gap: 10px; margin-top: 18px; }
 .form-actions .btn { flex: 1; }
 .item-picker-row { display: grid; grid-template-columns: 2fr 80px 90px 30px; gap: 8px; align-items: center; margin-bottom: 8px; }
@@ -539,6 +559,26 @@ td.strong { color: var(--text-main); font-weight: 600; }
     background: rgba(62,42,30,0.65); color: #fff; cursor: pointer; font-size: 0.8rem; backdrop-filter: blur(2px);
 }
 .capa-thumb button:hover { background: var(--danger); }
+
+.insta-form-preview {
+    width: 100%; height: 160px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 8px;
+    background: var(--surface-soft); display: flex; align-items: center; justify-content: center;
+}
+.insta-form-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.insta-card-admin { position: relative; border-radius: var(--radius-sm); overflow: hidden; border: 1px solid var(--border); box-shadow: var(--shadow-sm); background: var(--surface-soft); }
+.insta-card-admin-img { aspect-ratio: 1; background: var(--surface); }
+.insta-card-admin-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.insta-card-admin-body { padding: 8px 10px; }
+.insta-card-admin-body strong { display: block; font-size: 0.8rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insta-card-admin-body span { display: block; font-size: 0.7rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insta-card-admin-actions { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; }
+.insta-card-admin-actions button {
+    width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(255,255,255,0.9);
+    color: var(--text-body); cursor: pointer; font-size: 0.72rem; backdrop-filter: blur(2px);
+}
+.insta-card-admin-actions button:hover { background: #fff; color: var(--orange-600); }
+.insta-card-admin-actions button.del:hover { color: var(--danger); }
 
 /* ---------------------------------------------------------------------- */
 /* Responsive                                                              */
@@ -708,6 +748,19 @@ td.strong { color: var(--text-main); font-weight: 600; }
     display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.6rem; opacity: 0.9; transition: 0.2s;
 }
 .store-insta-tile:hover { opacity: 1; transform: scale(1.03); }
+.store-insta-card {
+    display: block; border-radius: 14px; overflow: hidden; background: var(--surface-soft);
+    border: 1px solid var(--border); text-decoration: none; color: inherit; transition: 0.2s;
+}
+.store-insta-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); border-color: var(--orange-200); }
+.store-insta-card-img { aspect-ratio: 1; overflow: hidden; }
+.store-insta-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.store-insta-card-body { padding: 10px 12px; }
+.store-insta-card-body strong { display: block; font-size: 0.85rem; color: var(--text-main); margin-bottom: 2px; }
+.store-insta-card-body p {
+    font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 
 .store-newsletter {
     max-width: 1180px; margin: 0 auto 60px; padding: 34px 40px; background: var(--orange-50); border-radius: var(--radius-lg);
