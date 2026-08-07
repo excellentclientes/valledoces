@@ -87,6 +87,21 @@ const Configuracoes = (() => {
                     <span id="banner-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
                 </div>
 
+                <div class="panel" style="max-width:680px;margin-bottom:20px;">
+                    <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo da loja virtual</h3>
+                    <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
+                        Imagem de fundo da página da loja virtual, atrás do catálogo e das outras
+                        seções (no lugar da parte mais clarinha). Fica escurecida automaticamente
+                        para não atrapalhar a leitura das informações.
+                    </p>
+                    <div class="capa-grid" id="fundoloja-grid"></div>
+                    <label class="btn btn-outline btn-sm" style="margin-top:14px;cursor:pointer;display:inline-flex;">
+                        <i class="fa-solid fa-upload"></i> Adicionar/trocar imagem
+                        <input type="file" id="fundoloja-input" accept="image/*" style="display:none;">
+                    </label>
+                    <span id="fundoloja-uploading" style="display:none;margin-left:10px;font-size:0.82rem;color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Enviando...</span>
+                </div>
+
                 <div class="panel" style="max-width:680px;">
                     <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo do painel administrativo</h3>
                     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
@@ -164,6 +179,7 @@ const Configuracoes = (() => {
         document.getElementById('capa-input').addEventListener('change', uploadCapa);
         document.getElementById('banner-input').addEventListener('change', uploadBanner);
         document.getElementById('fundo-input').addEventListener('change', uploadFundoPainel);
+        document.getElementById('fundoloja-input').addEventListener('change', uploadFundoLoja);
 
         document.getElementById('conta-foto-input').addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -185,10 +201,12 @@ const Configuracoes = (() => {
             const rmCapa = e.target.closest('.js-capa-remove');
             const rmBanner = e.target.closest('.js-banner-remove');
             const rmFundo = e.target.closest('.js-fundo-remove');
+            const rmFundoLoja = e.target.closest('.js-fundoloja-remove');
             if (rm) removeChip(rm.dataset.field, rm.dataset.value);
             if (rmCapa) removeCapa(rmCapa.dataset.id);
             if (rmBanner) removeBanner();
             if (rmFundo) removeFundoPainel();
+            if (rmFundoLoja) removeFundoLoja();
         });
 
         document.getElementById('btn-reset-senha').addEventListener('click', async () => {
@@ -360,6 +378,44 @@ const Configuracoes = (() => {
         `;
     }
 
+    async function uploadFundoLoja(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        const status = document.getElementById('fundoloja-uploading');
+        status.style.display = 'inline';
+        try {
+            const fundoLoja = await Utils.compressImageToBase64(file, { maxDim: 1400, maxBytes: 300000 });
+            await window.db.collection('configuracoes').doc('geral').set({ fundoLoja }, { merge: true });
+            Utils.toast('Fundo da loja atualizado.', 'success');
+        } catch (err) {
+            Utils.toast('Erro ao enviar imagem: ' + err.message, 'error');
+        } finally {
+            status.style.display = 'none';
+            e.target.value = '';
+        }
+    }
+
+    async function removeFundoLoja() {
+        Utils.confirmDialog('Remover o fundo da loja virtual?', async () => {
+            try {
+                await window.db.collection('configuracoes').doc('geral').update({
+                    fundoLoja: firebase.firestore.FieldValue.delete()
+                });
+                Utils.toast('Fundo removido.', 'success');
+            } catch (err) { Utils.toast('Erro: ' + err.message, 'error'); }
+        }, 'Remover fundo', 'Sim, remover');
+    }
+
+    function fundoLojaGridHtml(fundoLoja) {
+        if (!fundoLoja) return '<span style="font-size:0.82rem;color:var(--text-muted);">Nenhuma imagem definida — a loja usa o fundo padrão.</span>';
+        return `
+            <div class="capa-thumb">
+                <img src="${fundoLoja}">
+                <button class="js-fundoloja-remove" title="Remover"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+    }
+
     async function addChip(field, inputId, isEmail = false) {
         const input = document.getElementById(inputId);
         let value = input.value.trim();
@@ -402,6 +458,7 @@ const Configuracoes = (() => {
         document.getElementById('capa-grid').innerHTML = capaGridHtml(Store.capas);
         document.getElementById('banner-grid').innerHTML = bannerGridHtml(c.bannerMeio);
         document.getElementById('fundo-grid').innerHTML = fundoGridHtml(c.fundoPainel);
+        document.getElementById('fundoloja-grid').innerHTML = fundoLojaGridHtml(c.fundoLoja);
         document.getElementById('chips-categorias').innerHTML = chipHtml('categoriasProdutos', c.categoriasProdutos);
         document.getElementById('chips-pagamento').innerHTML = chipHtml('formasPagamento', c.formasPagamento);
         document.getElementById('chips-usuarios').innerHTML = chipHtml('usuariosAutorizados', c.usuariosAutorizados);
