@@ -5,8 +5,13 @@ produção, estoque, financeiro, precificação e relatórios — tudo em tempo 
 
 ## Stack
 
-HTML, CSS e JavaScript puro (sem build/bundler), Firebase (Authentication + Firestore + Storage)
-e Chart.js para os gráficos. Basta abrir/publicar os arquivos estáticos, não há passo de build.
+HTML, CSS e JavaScript puro (sem build/bundler), Firebase (Authentication + Firestore) e
+Chart.js para os gráficos. Basta abrir/publicar os arquivos estáticos, não há passo de build.
+
+Fotos (perfil, produtos, capa da loja) **não usam o Firebase Storage** — são redimensionadas
+e comprimidas no navegador e salvas como base64 direto em campos do Firestore. Isso evita
+depender do Storage, que em projetos novos do Firebase só funciona no plano pago (Blaze); o
+Firestore usado aqui funciona no plano gratuito (Spark).
 
 ## Estrutura
 
@@ -31,7 +36,7 @@ js/configuracoes.js         aba Configurações
 js/onboarding.js            assistente de boas-vindas (primeiro login de um usuário autorizado)
 js/storefront.js            loja virtual pública (login autenticado mas fora da lista de autorizados)
 firestore.rules            regras de segurança do Firestore
-storage.rules               regras de segurança do Storage (fotos de produtos e de perfil)
+storage.rules               regras do Storage (não usado hoje — fotos vão em base64 no Firestore)
 ```
 
 ## Primeiro acesso — passo a passo no Firebase Console
@@ -55,17 +60,17 @@ provedores:
    npm install -g firebase-tools
    firebase login
    firebase use valledoces
-   firebase deploy --only firestore:rules,storage
+   firebase deploy --only firestore:rules
    ```
-   (ou cole o conteúdo de `firestore.rules` e `storage.rules` diretamente no console,
-   em Firestore → Regras / Storage → Regras).
+   (ou cole o conteúdo de `firestore.rules` diretamente no console, em Firestore → Regras).
+   Não é preciso mexer no Storage — o app não usa esse serviço (veja a seção "Stack").
 7. Abra `index.html` (ou publique via Firebase Hosting / GitHub Pages) e crie sua conta
    direto na tela de login ("Cadastrar") ou entre com o Google, usando o e-mail
    `andressavalerio@yahoo.com` (já vem liberado por padrão — veja abaixo).
 
 > As chaves em `config/firebase-config.js` são as credenciais **públicas** do app Web —
 > é normal e esperado que fiquem visíveis no navegador. A segurança de verdade vem das
-> regras do Firestore/Storage (passo 6) e do login.
+> regras do Firestore (passo 6) e do login.
 
 ### Quem consegue entrar no painel de gestão?
 
@@ -91,8 +96,9 @@ no Dashboard, junto com os pedidos criados manualmente pelo painel.
 > só os pedidos lançados pelo painel fazem isso hoje, pra evitar dar a uma conta de cliente
 > qualquer permissão de alterar estoque/preço no banco.
 
-A capa da loja (Configurações → Capa da loja) aceita quantas fotos você quiser. Com 2 ou mais,
-elas aparecem na página inicial da loja como um carrossel, avançando sozinho a cada 3 segundos.
+A capa da loja (Configurações → Capa da loja) aceita quantas fotos você quiser — cada uma vira
+um documento na coleção `capas`, então não há limite de quantidade. Com 2 ou mais, elas aparecem
+na página inicial da loja como um carrossel, avançando sozinho a cada 3 segundos.
 
 ## Publicar (Firebase Hosting)
 
