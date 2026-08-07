@@ -597,24 +597,31 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-account-email { font-size: 0.8rem; color: var(--text-body); margin-bottom: 10px; word-break: break-all; }
 
 .store-hero {
-    max-width: 1180px; margin: 0 auto; padding: 40px 24px; display: flex; flex-direction: column; align-items: center; gap: 22px;
+    max-width: 1180px; margin: 0 auto; padding: 40px 24px;
 }
-.store-hero-btn { padding: 13px 26px; font-size: 0.95rem; }
-.store-hero-media { width: 100%; }
-.store-hero-placeholder {
-    width: 100%; aspect-ratio: 3/1; border-radius: var(--radius-lg);
-    background: radial-gradient(circle at 30% 30%, var(--orange-300, var(--orange-500)), var(--orange-600) 75%);
-    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 3.4rem;
+.store-hero-btn { padding: 14px 30px; font-size: 0.95rem; box-shadow: 0 12px 26px rgba(0,0,0,0.3); }
+.store-hero-media {
+    width: 100%; position: relative; border-radius: var(--radius-lg); overflow: hidden;
     box-shadow: 0 30px 60px rgba(234,106,10,0.25);
 }
+.store-hero-media::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(to top, rgba(20,10,5,0.55) 0%, rgba(20,10,5,0.12) 35%, rgba(20,10,5,0) 60%);
+}
+.store-hero-placeholder {
+    width: 100%; aspect-ratio: 3/1;
+    background: radial-gradient(circle at 30% 30%, var(--orange-300, var(--orange-500)), var(--orange-600) 75%);
+    display: flex; align-items: center; justify-content: center; color: #fff; font-size: 3.4rem;
+}
 
-.store-hero-carousel { width: 100%; border-radius: var(--radius-lg); overflow: hidden; position: relative; box-shadow: 0 30px 60px rgba(234,106,10,0.25); }
+.store-hero-carousel { width: 100%; position: relative; }
 .store-hero-carousel-track { display: flex; transition: transform 0.5s ease; }
 .store-hero-slide { flex: 0 0 100%; aspect-ratio: 3/1; }
 .store-hero-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.store-hero-dots { position: absolute; bottom: 12px; left: 0; right: 0; display: flex; justify-content: center; gap: 6px; }
+.store-hero-dots { position: absolute; bottom: 24px; right: 24px; z-index: 2; display: flex; gap: 6px; }
 .store-hero-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,0.65); transition: 0.2s; }
 .store-hero-dot.active { background: #fff; width: 18px; border-radius: 4px; }
+.store-hero-cta { position: absolute; left: 28px; bottom: 24px; z-index: 2; }
 
 .store-link { font-size: 0.82rem; font-weight: 700; color: var(--orange-600); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .store-link:hover { text-decoration: underline; }
@@ -649,17 +656,19 @@ td.strong { color: var(--text-main); font-weight: 600; }
 .store-add-btn { width: 38px; height: 38px; border-radius: 50%; border: none; background: var(--orange-500); color: #fff; cursor: pointer; font-size: 0.95rem; transition: 0.15s; }
 .store-add-btn:hover { background: var(--orange-600); transform: scale(1.06); }
 
-.store-banner {
-    margin: 20px auto 60px; max-width: 1180px; padding: 0 24px;
-    display: flex; flex-direction: column; align-items: center; gap: 22px;
-}
+.store-banner { margin: 20px auto 60px; max-width: 1180px; padding: 0 24px; }
 .store-banner-media {
-    width: 100%; aspect-ratio: 3/1; border-radius: var(--radius-lg); overflow: hidden;
+    width: 100%; aspect-ratio: 3/1; border-radius: var(--radius-lg); overflow: hidden; position: relative;
     background: radial-gradient(circle at 25% 30%, var(--orange-600), #4a2409 90%);
     display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.85); font-size: 3rem;
     box-shadow: 0 30px 60px rgba(234,106,10,0.2);
 }
+.store-banner-media::after {
+    content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+    background: linear-gradient(to top, rgba(20,10,5,0.55) 0%, rgba(20,10,5,0.12) 35%, rgba(20,10,5,0) 60%);
+}
 .store-banner-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.store-banner-cta { position: absolute; left: 28px; bottom: 24px; z-index: 2; }
 
 .store-benefits { max-width: 1180px; margin: 0 auto 60px; padding: 0 24px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; text-align: center; }
 .store-benefits i { font-size: 1.3rem; color: var(--orange-500); margin-bottom: 8px; display: block; }
