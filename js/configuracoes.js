@@ -91,8 +91,8 @@ const Configuracoes = (() => {
                     <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo da loja virtual</h3>
                     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
                         Imagem de fundo da página da loja virtual, atrás do catálogo e das outras
-                        seções (no lugar da parte mais clarinha). Fica escurecida automaticamente
-                        para não atrapalhar a leitura das informações.
+                        seções (no lugar da parte mais clarinha). Aparece do jeito que você enviar,
+                        sem escurecer.
                     </p>
                     <div class="capa-grid" id="fundoloja-grid"></div>
                     <label class="btn btn-outline btn-sm" style="margin-top:14px;cursor:pointer;display:inline-flex;">
@@ -106,8 +106,7 @@ const Configuracoes = (() => {
                     <h3 style="font-size:0.95rem;margin-bottom:4px;">Fundo do painel administrativo</h3>
                     <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">
                         Imagem de fundo só do painel de gestão (esta tela que você está vendo agora),
-                        não aparece na loja virtual. Fica escurecida automaticamente para não atrapalhar
-                        a leitura dos cartões e tabelas.
+                        não aparece na loja virtual. Aparece do jeito que você enviar, sem escurecer.
                     </p>
                     <div class="capa-grid" id="fundo-grid"></div>
                     <label class="btn btn-outline btn-sm" style="margin-top:14px;cursor:pointer;display:inline-flex;">

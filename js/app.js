@@ -231,7 +231,7 @@ function applyPainelBackground() {
     const view = document.getElementById('view');
     if (!view) return;
     if (Store.config.fundoPainel) {
-        view.style.backgroundImage = `linear-gradient(rgba(20,10,5,0.6), rgba(20,10,5,0.6)), url("${Store.config.fundoPainel}")`;
+        view.style.backgroundImage = `url("${Store.config.fundoPainel}")`;
         view.style.backgroundSize = 'cover';
         view.style.backgroundPosition = 'center';
         view.style.backgroundRepeat = 'no-repeat';

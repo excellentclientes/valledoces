@@ -273,7 +273,7 @@ const Storefront = (() => {
         if (!page) return;
         page.classList.toggle('has-fundo', !!config.fundoLoja);
         if (config.fundoLoja) {
-            page.style.backgroundImage = `linear-gradient(rgba(20,10,5,0.6), rgba(20,10,5,0.6)), url("${config.fundoLoja}")`;
+            page.style.backgroundImage = `url("${config.fundoLoja}")`;
             page.style.backgroundSize = 'cover';
             page.style.backgroundPosition = 'center';
             page.style.backgroundRepeat = 'no-repeat';
