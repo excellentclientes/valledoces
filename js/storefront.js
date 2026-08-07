@@ -14,6 +14,7 @@ const Storefront = (() => {
     let searchTerm = '';
     let unsubs = [];
     let mounted = false;
+    let previewMode = false;
     let meuCliente = null;
     let carouselTimer = null;
     let carouselIndex = 0;
@@ -26,6 +27,18 @@ const Storefront = (() => {
         bindStatic();
         listen();
         loadMeuCliente();
+    }
+
+    function openAdminPreview() {
+        previewMode = true;
+        document.getElementById('app-shell').style.display = 'none';
+        document.getElementById('storefront-screen').style.display = 'block';
+        mount();
+    }
+
+    function closeAdminPreview() {
+        document.getElementById('storefront-screen').style.display = 'none';
+        document.getElementById('app-shell').style.display = 'flex';
     }
 
     async function loadMeuCliente() {
@@ -52,6 +65,7 @@ const Storefront = (() => {
                         <a href="#store-contato">Contato</a>
                     </nav>
                     <div class="store-header-actions">
+                        ${previewMode ? `<button class="store-preview-exit" id="store-preview-exit"><i class="fa-solid fa-arrow-left"></i> Voltar ao painel</button>` : ''}
                         <button class="store-icon-btn" id="store-search-btn" title="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
                         <div class="store-account-wrap">
                             <button class="store-icon-btn" id="store-account-btn" title="Minha conta"><i class="fa-regular fa-user"></i></button>
@@ -181,6 +195,9 @@ const Storefront = (() => {
     }
 
     function bindStatic() {
+        if (previewMode) {
+            document.getElementById('store-preview-exit').addEventListener('click', closeAdminPreview);
+        }
         document.getElementById('store-cart-btn').addEventListener('click', () => toggleCart(true));
         document.getElementById('store-cart-close').addEventListener('click', () => toggleCart(false));
         document.getElementById('store-cart-backdrop').addEventListener('click', () => { toggleCart(false); toggleAccountPop(false); });
@@ -526,5 +543,5 @@ const Storefront = (() => {
         }
     }
 
-    return { mount };
+    return { mount, openAdminPreview, closeAdminPreview };
 })();

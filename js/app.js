@@ -177,6 +177,7 @@ function bindNav() {
         document.getElementById('sidebar-backdrop').classList.add('open');
     });
     document.getElementById('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
+    document.getElementById('btn-view-store').addEventListener('click', () => Storefront.openAdminPreview());
 
     document.addEventListener('click', (e) => {
         const el = e.target.closest('[data-goto]');
