@@ -9,6 +9,7 @@ const Storefront = (() => {
     let config = {};
     let cart = [];
     let catFilter = '';
+    let searchTerm = '';
     let unsubs = [];
     let mounted = false;
 
@@ -22,34 +23,52 @@ const Storefront = (() => {
     }
 
     function shellHtml() {
+        const user = Auth.currentUser();
         return `
-        <div class="store-page">
+        <div class="store-page" id="store-top">
             <header class="store-header">
                 <div class="store-header-inner">
                     <div class="store-logo brand-font">Vallê<span>DOCES</span></div>
                     <nav class="store-nav">
+                        <a href="#store-top">Início</a>
                         <a href="#store-produtos">Cardápio</a>
+                        <a href="#store-kits">Kits e Presentes</a>
                         <a href="#store-sobre">Quem somos</a>
                         <a href="#store-contato">Contato</a>
                     </nav>
                     <div class="store-header-actions">
+                        <button class="store-icon-btn" id="store-search-btn" title="Buscar"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        <div class="store-account-wrap">
+                            <button class="store-icon-btn" id="store-account-btn" title="Minha conta"><i class="fa-regular fa-user"></i></button>
+                            <div class="store-account-pop" id="store-account-pop">
+                                <div class="store-account-email">${Utils.escapeHtml(user?.email || '')}</div>
+                                <button class="btn btn-outline btn-sm btn-block" id="store-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+                            </div>
+                        </div>
                         <button class="store-icon-btn" id="store-cart-btn" title="Carrinho">
                             <i class="fa-solid fa-cart-shopping"></i>
                             <span class="store-cart-badge" id="store-cart-badge" style="display:none;">0</span>
                         </button>
-                        <button class="store-icon-btn" id="store-logout-btn" title="Sair"><i class="fa-solid fa-right-from-bracket"></i></button>
                     </div>
+                </div>
+                <div class="store-search-bar" id="store-search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="store-search-input" placeholder="Buscar doces...">
+                    <button id="store-search-close"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             </header>
 
             <section class="store-hero">
                 <div class="store-hero-text">
-                    <span class="store-hero-tag">Doce momento</span>
-                    <h1>Doçura que abraça,<br>sabor que fica na memória.</h1>
-                    <p id="store-hero-sub">Doces artesanais feitos com amor para adoçar os seus melhores momentos.</p>
-                    <a href="#store-produtos" class="btn btn-primary store-hero-btn"><i class="fa-solid fa-cookie-bite"></i> Ver cardápio</a>
+                    <span class="store-hero-script">Promoção</span>
+                    <h1>DOCE MOMENTO</h1>
+                    <p id="store-hero-sub">Doçura que abraça,<br>sabor que fica na memória. 🧡</p>
+                    <a href="#store-produtos" class="btn btn-primary store-hero-btn">Comprar agora</a>
                 </div>
-                <div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div>
+                <div class="store-hero-art-wrap">
+                    <div class="store-hero-art"><i class="fa-solid fa-cookie-bite"></i></div>
+                    <div class="store-hero-badge"><span>Novidade</span></div>
+                </div>
             </section>
 
             <section class="store-features">
@@ -60,14 +79,20 @@ const Storefront = (() => {
             </section>
 
             <section class="store-section" id="store-produtos">
-                <div class="store-section-head"><h2>Navegue por categoria</h2></div>
+                <div class="store-section-head">
+                    <h2>Navegue por categoria</h2>
+                    <span class="store-link" data-cat-reset="1">Ver todas <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
                 <div class="store-cats" id="store-cats"></div>
 
-                <div class="store-section-head" style="margin-top:36px;"><h2>Nossos doces 🧡</h2></div>
+                <div class="store-section-head" style="margin-top:36px;">
+                    <h2>Nossos doces 🧡</h2>
+                    <span class="store-link" data-cat-reset="1">Ver todos os produtos <i class="fa-solid fa-arrow-right"></i></span>
+                </div>
                 <div class="store-grid" id="store-grid"></div>
             </section>
 
-            <section class="store-banner" id="store-sobre">
+            <section class="store-banner" id="store-kits">
                 <div>
                     <span class="store-hero-tag light">Compartilhe</span>
                     <h2>Doçura!</h2>
@@ -76,23 +101,62 @@ const Storefront = (() => {
                 </div>
             </section>
 
-            <section class="store-benefits">
+            <section class="store-benefits" id="store-sobre">
                 <div><i class="fa-solid fa-truck"></i><strong>Entrega combinada</strong><span>Direto com a loja</span></div>
                 <div><i class="fa-solid fa-box"></i><strong>Embalagem segura</strong><span>Chega perfeito até você</span></div>
                 <div><i class="fa-brands fa-whatsapp"></i><strong>Pedido simples</strong><span>Finalize pelo WhatsApp</span></div>
                 <div><i class="fa-solid fa-comments"></i><strong>Atendimento</strong><span>Feito com carinho</span></div>
             </section>
 
-            <footer class="store-footer" id="store-contato">
+            <section class="store-insta">
+                <div class="store-section-head">
+                    <div>
+                        <h2>Siga nosso Instagram</h2>
+                        <span class="store-insta-handle" id="store-insta-handle">@valledoces</span>
+                    </div>
+                </div>
+                <div class="store-insta-grid">
+                    ${[0, 1, 2, 3, 4].map(() => `<div class="store-insta-tile"><i class="fa-solid fa-cookie-bite"></i></div>`).join('')}
+                </div>
+            </section>
+
+            <section class="store-newsletter">
                 <div>
+                    <h2>Receba novidades e promoções</h2>
+                    <p>Fique por dentro dos lançamentos e ofertas da Vallê Doces.</p>
+                </div>
+                <form id="store-newsletter-form">
+                    <input type="email" id="store-newsletter-email" placeholder="Seu melhor e-mail" required>
+                    <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            </section>
+
+            <footer class="store-footer" id="store-contato">
+                <div class="store-footer-col store-footer-brand">
                     <div class="store-logo brand-font">Vallê<span>DOCES</span></div>
                     <p>Doces artesanais feitos com amor para adoçar os seus melhores momentos.</p>
                 </div>
-                <div>
-                    <strong>Contato</strong>
-                    <p id="store-contato-tel"><i class="fa-brands fa-whatsapp"></i> —</p>
-                    <p id="store-contato-insta"><i class="fa-brands fa-instagram"></i> —</p>
-                    <p id="store-contato-end"><i class="fa-solid fa-location-dot"></i> —</p>
+                <div class="store-footer-col">
+                    <strong>Institucional</strong>
+                    <span>Quem somos</span>
+                    <span>Como comprar</span>
+                    <span>Política de entrega</span>
+                    <span>Trocas e devoluções</span>
+                </div>
+                <div class="store-footer-col">
+                    <strong>Atendimento</strong>
+                    <span id="store-contato-tel"><i class="fa-brands fa-whatsapp"></i> —</span>
+                    <span id="store-contato-insta"><i class="fa-brands fa-instagram"></i> —</span>
+                    <span id="store-contato-end"><i class="fa-solid fa-location-dot"></i> —</span>
+                </div>
+                <div class="store-footer-col">
+                    <strong>Formas de pagamento</strong>
+                    <div class="store-pay-icons">
+                        <span class="store-pay-badge"><i class="fa-brands fa-cc-visa"></i></span>
+                        <span class="store-pay-badge"><i class="fa-brands fa-cc-mastercard"></i></span>
+                        <span class="store-pay-badge">Pix</span>
+                        <span class="store-pay-badge">Boleto</span>
+                    </div>
                 </div>
             </footer>
             <p class="store-copy">© ${new Date().getFullYear()} Vallê Doces. Todos os direitos reservados.</p>
@@ -117,21 +181,50 @@ const Storefront = (() => {
     function bindStatic() {
         document.getElementById('store-cart-btn').addEventListener('click', () => toggleCart(true));
         document.getElementById('store-cart-close').addEventListener('click', () => toggleCart(false));
-        document.getElementById('store-cart-backdrop').addEventListener('click', () => toggleCart(false));
+        document.getElementById('store-cart-backdrop').addEventListener('click', () => { toggleCart(false); toggleAccountPop(false); });
         document.getElementById('store-cart-checkout').addEventListener('click', checkout);
         document.getElementById('store-logout-btn').addEventListener('click', () => {
             Utils.confirmDialog('Deseja sair da sua conta?', async () => { await Auth.logout(); }, 'Sair');
         });
+        document.getElementById('store-account-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleAccountPop();
+        });
+        document.getElementById('store-search-btn').addEventListener('click', () => {
+            const bar = document.getElementById('store-search-bar');
+            const open = bar.classList.toggle('open');
+            if (open) document.getElementById('store-search-input').focus();
+            else { searchTerm = ''; document.getElementById('store-search-input').value = ''; renderGrid(); }
+        });
+        document.getElementById('store-search-close').addEventListener('click', () => {
+            document.getElementById('store-search-bar').classList.remove('open');
+            searchTerm = ''; document.getElementById('store-search-input').value = ''; renderGrid();
+        });
+        document.getElementById('store-search-input').addEventListener('input', Utils.debounce((e) => {
+            searchTerm = e.target.value.toLowerCase().trim();
+            renderGrid();
+        }, 200));
+        document.getElementById('store-newsletter-form').addEventListener('submit', subscribeNewsletter);
+
         document.getElementById('storefront-screen').addEventListener('click', (e) => {
             const catChip = e.target.closest('.store-cat-chip');
+            const catReset = e.target.closest('[data-cat-reset]');
             const addBtn = e.target.closest('.js-add-cart');
             const qtyBtn = e.target.closest('.js-cart-qty');
             const rmBtn = e.target.closest('.js-cart-remove');
             if (catChip) { catFilter = catChip.dataset.cat; renderCats(); renderGrid(); }
+            if (catReset) { catFilter = ''; renderCats(); renderGrid(); document.getElementById('store-produtos').scrollIntoView({ behavior: 'smooth' }); }
             if (addBtn) addToCart(addBtn.dataset.id);
             if (qtyBtn) changeQty(qtyBtn.dataset.id, Number(qtyBtn.dataset.delta));
             if (rmBtn) removeFromCart(rmBtn.dataset.id);
+            if (!e.target.closest('.store-account-wrap')) toggleAccountPop(false);
         });
+    }
+
+    function toggleAccountPop(force) {
+        const pop = document.getElementById('store-account-pop');
+        if (force === undefined) pop.classList.toggle('open');
+        else pop.classList.toggle('open', force);
     }
 
     function toggleCart(open) {
@@ -163,10 +256,12 @@ const Storefront = (() => {
         const insta = document.getElementById('store-contato-insta');
         const end = document.getElementById('store-contato-end');
         const sub = document.getElementById('store-hero-sub');
+        const handle = document.getElementById('store-insta-handle');
         if (tel) tel.innerHTML = `<i class="fa-brands fa-whatsapp"></i> ${Utils.escapeHtml(config.telefone || 'Em breve')}`;
         if (insta) insta.innerHTML = `<i class="fa-brands fa-instagram"></i> ${Utils.escapeHtml(config.instagram || '@valledoces')}`;
         if (end) end.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${Utils.escapeHtml(config.endereco || 'Consulte a loja')}`;
-        if (sub && config.nomeLoja) sub.textContent = `Doces artesanais da ${config.nomeLoja}, feitos com amor para adoçar os seus melhores momentos.`;
+        if (handle) handle.textContent = config.instagram || '@valledoces';
+        if (sub && config.nomeLoja) sub.innerHTML = `Doces artesanais da ${Utils.escapeHtml(config.nomeLoja)},<br>feitos com amor para adoçar os seus melhores momentos. 🧡`;
     }
 
     function renderCats() {
@@ -187,8 +282,9 @@ const Storefront = (() => {
         if (!grid) return;
         let list = produtos;
         if (catFilter) list = list.filter(p => p.categoria === catFilter);
+        if (searchTerm) list = list.filter(p => (p.nome || '').toLowerCase().includes(searchTerm));
         if (!list.length) {
-            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-cookie-bite"></i>Nenhum doce disponível no momento. Volte em breve!</div>`;
+            grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-cookie-bite"></i>Nenhum doce encontrado.</div>`;
             return;
         }
         grid.innerHTML = list.map(p => `
@@ -269,6 +365,20 @@ const Storefront = (() => {
         const tel = (config.telefone || '').replace(/\D/g, '');
         if (!tel) { Utils.toast('A loja ainda não configurou um telefone para pedidos.', 'error'); return; }
         window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(texto)}`, '_blank');
+    }
+
+    async function subscribeNewsletter(e) {
+        e.preventDefault();
+        const input = document.getElementById('store-newsletter-email');
+        const email = input.value.trim();
+        if (!email) return;
+        try {
+            await window.db.collection('newsletter').add({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            Utils.toast('Inscrição feita com sucesso!', 'success');
+            input.value = '';
+        } catch (err) {
+            Utils.toast('Não foi possível concluir agora. Tente novamente.', 'error');
+        }
     }
 
     return { mount };
