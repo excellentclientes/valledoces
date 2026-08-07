@@ -566,6 +566,16 @@ td.strong { color: var(--text-main); font-weight: 600; }
    ========================================================================== */
 #storefront-screen { position: fixed; inset: 0; z-index: 8000; overflow-y: auto; background: var(--bg); }
 .store-page { min-height: 100%; }
+.store-page.has-fundo { --text-main: #fff; --text-body: rgba(255,255,255,0.88); --text-muted: rgba(255,255,255,0.72); }
+.store-page.has-fundo .store-header,
+.store-page.has-fundo .store-feature,
+.store-page.has-fundo .store-card,
+.store-page.has-fundo .store-newsletter,
+.store-page.has-fundo .store-cart-drawer,
+.store-page.has-fundo .store-account-pop,
+.store-page.has-fundo .store-pay-badge {
+    --text-main: #3E2A1E; --text-body: #6B5847; --text-muted: #9C8C7D;
+}
 
 .store-header { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
 .store-header-inner { max-width: 1180px; margin: 0 auto; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
