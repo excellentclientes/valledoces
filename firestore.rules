@@ -51,5 +51,10 @@ service cloud.firestore {
     match /financeiro/{id} { allow read, write: if isAdmin(); }
     match /producao/{id} { allow read, write: if isAdmin(); }
     match /receitas/{id} { allow read, write: if isAdmin(); }
+
+    match /newsletter/{id} {
+      allow create: if request.resource.data.email is string;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }
