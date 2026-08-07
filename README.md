@@ -28,8 +28,10 @@ js/financeiro.js            aba Financeiro
 js/precificacao.js          aba Precificação (ficha técnica de custo)
 js/relatorios.js            aba Relatórios
 js/configuracoes.js         aba Configurações
+js/onboarding.js            assistente de boas-vindas (primeiro login de um usuário autorizado)
+js/storefront.js            loja virtual pública (login autenticado mas fora da lista de autorizados)
 firestore.rules            regras de segurança do Firestore
-storage.rules               regras de segurança do Storage (fotos de produtos)
+storage.rules               regras de segurança do Storage (fotos de produtos e de perfil)
 ```
 
 ## Primeiro acesso — passo a passo no Firebase Console
@@ -58,19 +60,26 @@ provedores:
    (ou cole o conteúdo de `firestore.rules` e `storage.rules` diretamente no console,
    em Firestore → Regras / Storage → Regras).
 7. Abra `index.html` (ou publique via Firebase Hosting / GitHub Pages) e crie sua conta
-   direto na tela de login ("Criar conta") ou entre com o Google.
+   direto na tela de login ("Cadastrar") ou entre com o Google, usando o e-mail
+   `andressavalerio@yahoo.com` (já vem liberado por padrão — veja abaixo).
 
 > As chaves em `config/firebase-config.js` são as credenciais **públicas** do app Web —
 > é normal e esperado que fiquem visíveis no navegador. A segurança de verdade vem das
-> regras do Firestore/Storage (passo 6) e do login: sem estar autenticado, ninguém lê ou
-> grava dados.
->
-> ⚠️ Como o cadastro por e-mail é aberto (qualquer pessoa pode criar uma conta na tela de
-> login), e as regras atuais liberam leitura/escrita para **qualquer usuário autenticado**,
-> qualquer um que se cadastre passa a ter acesso completo aos dados da loja. Para um
-> negócio com dados sensíveis, avalie restringir depois — por exemplo, limitando o login
-> a uma lista de e-mails autorizados nas regras do Firestore, ou desativando o cadastro
-> por e-mail e mantendo só o Google com domínio restrito.
+> regras do Firestore/Storage (passo 6) e do login.
+
+### Quem consegue entrar no painel de gestão?
+
+O cadastro (e-mail ou Google) é aberto para qualquer pessoa, mas **só quem está na lista
+de "Usuários autorizados"** (Configurações → Usuários autorizados, dentro do painel) tem
+acesso aos dados do negócio — pedidos, clientes, financeiro, etc. As regras do Firestore
+já aplicam essa mesma restrição no servidor, não só na tela.
+
+Quem faz login com um e-mail fora da lista (Google ou cadastro) não vê o painel: cai
+direto numa **loja virtual pública**, com o catálogo de produtos ativos e um carrinho que
+finaliza o pedido pelo WhatsApp da loja (número configurado em Dados da loja).
+
+No primeiro login de um e-mail autorizado, o sistema pede nome, telefone e foto (opcional)
+antes de abrir o painel — é esse nome que aparece na saudação e na barra lateral.
 
 ## Publicar (Firebase Hosting)
 

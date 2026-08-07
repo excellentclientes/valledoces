@@ -1,7 +1,16 @@
 rules_version = '2';
 
 // Regras de segurança — Vallê Doces
-// Sistema interno de gestão: todo o acesso a dados exige autenticação.
+//
+// - Catálogo de produtos e dados públicos da loja: qualquer pessoa pode ler
+//   (é o que abastece a loja virtual pública).
+// - Todo o resto do sistema de gestão (pedidos, clientes, financeiro,
+//   estoque, produção, fichas técnicas, config avançada): só usuários
+//   autenticados cujo e-mail está na lista `usuariosAutorizados`, guardada
+//   em configuracoes/geral.
+// - Cada usuário só lê/edita o próprio perfil (usuarios/{uid}); admins
+//   também podem ler todos os perfis.
+//
 // Publique com: firebase deploy --only firestore:rules
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -10,8 +19,37 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    match /{document=**} {
-      allow read, write: if signedIn();
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/configuracoes/geral)
+        && ('usuariosAutorizados' in get(/databases/$(database)/documents/configuracoes/geral).data)
+        && request.auth.token.email in get(/databases/$(database)/documents/configuracoes/geral).data.usuariosAutorizados;
     }
+
+    match /produtos/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /configuracoes/geral {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /configuracoes/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    match /usuarios/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    match /clientes/{id} { allow read, write: if isAdmin(); }
+    match /pedidos/{id} { allow read, write: if isAdmin(); }
+    match /estoque/{id} { allow read, write: if isAdmin(); }
+    match /financeiro/{id} { allow read, write: if isAdmin(); }
+    match /producao/{id} { allow read, write: if isAdmin(); }
+    match /receitas/{id} { allow read, write: if isAdmin(); }
   }
 }
