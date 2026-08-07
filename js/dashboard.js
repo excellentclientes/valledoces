@@ -42,11 +42,11 @@ const Dashboard = (() => {
                 <div class="panel">
                     <div class="panel-head">
                         <h3><i class="fa-solid fa-chart-line" style="color:var(--orange-500);margin-right:6px;"></i>Faturamento</h3>
-                        <select id="fat-period" class="select-pill">
-                            <option value="7">Últimos 7 dias</option>
-                            <option value="14">Últimos 14 dias</option>
-                            <option value="30">Últimos 30 dias</option>
-                        </select>
+                        ${Utils.selectHtml({ id: 'fat-period', pill: true, value: '7', options: [
+                            { value: '7', label: 'Últimos 7 dias' },
+                            { value: '14', label: 'Últimos 14 dias' },
+                            { value: '30', label: 'Últimos 30 dias' }
+                        ] })}
                     </div>
                     <div class="chart-wrap"><canvas id="chart-faturamento"></canvas></div>
                 </div>

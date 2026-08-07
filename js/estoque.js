@@ -87,7 +87,7 @@ const Estoque = (() => {
                 <div class="form-row">
                     <div class="form-group"><label>Categoria</label><input type="text" id="f-categoria" value="${i ? Utils.escapeHtml(i.categoria || '') : ''}" placeholder="Ex: Frutas"></div>
                     <div class="form-group"><label>Unidade</label>
-                        <select id="f-unidade">${['kg', 'g', 'L', 'ml', 'un'].map(u => `<option ${i?.unidade === u ? 'selected' : ''}>${u}</option>`).join('')}</select>
+                        ${Utils.selectHtml({ id: 'f-unidade', value: i?.unidade || 'kg', options: ['kg', 'g', 'L', 'ml', 'un'].map(u => ({ value: u, label: u })) })}
                     </div>
                 </div>
                 <div class="form-row">
@@ -134,7 +134,7 @@ const Estoque = (() => {
             <form id="adjust-form">
                 <div class="form-row">
                     <div class="form-group"><label>Tipo</label>
-                        <select id="f-tipo"><option value="entrada">Entrada (compra)</option><option value="saida">Saída (uso/perda)</option></select>
+                        ${Utils.selectHtml({ id: 'f-tipo', value: 'entrada', options: [{ value: 'entrada', label: 'Entrada (compra)' }, { value: 'saida', label: 'Saída (uso/perda)' }] })}
                     </div>
                     <div class="form-group"><label>Quantidade</label><input type="number" step="0.01" min="0.01" id="f-qtd-mov" required></div>
                 </div>

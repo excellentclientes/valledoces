@@ -17,9 +17,7 @@ const Precificacao = (() => {
                     <form id="pricer-form">
                         <div class="form-row">
                             <div class="form-group"><label>Produto</label>
-                                <select id="f-produto"><option value="">Sem vínculo (cálculo avulso)</option>
-                                    ${Store.produtos.map(p => `<option value="${p.id}">${Utils.escapeHtml(p.nome)}</option>`).join('')}
-                                </select>
+                                ${Utils.selectHtml({ id: 'f-produto', placeholder: 'Sem vínculo (cálculo avulso)', options: Store.produtos.map(p => ({ value: p.id, label: p.nome })) })}
                             </div>
                             <div class="form-group"><label>Rendimento da receita (un.)</label><input type="number" min="1" id="f-rendimento" value="1"></div>
                         </div>
@@ -82,10 +80,7 @@ const Precificacao = (() => {
         if (!box) return;
         box.innerHTML = ingRows.map((row, idx) => `
             <div class="ing-row">
-                <select class="js-ing-insumo" data-idx="${idx}">
-                    <option value="">Selecione o ingrediente...</option>
-                    ${Store.estoque.map(s => `<option value="${s.id}" ${s.id === row.insumoId ? 'selected' : ''}>${Utils.escapeHtml(s.nome)} (${Utils.formatBRL(s.custoUnitario)}/${Utils.escapeHtml(s.unidade)})</option>`).join('')}
-                </select>
+                ${Utils.selectHtml({ id: `ing-insumo-${idx}`, className: 'js-ing-insumo', dataAttrs: { idx }, value: row.insumoId, placeholder: 'Selecione o ingrediente...', options: Store.estoque.map(s => ({ value: s.id, label: `${s.nome} (${Utils.formatBRL(s.custoUnitario)}/${s.unidade})` })) })}
                 <input type="number" step="0.001" min="0" class="js-ing-qtd" data-idx="${idx}" placeholder="Qtd." value="${row.quantidade}">
                 <span class="js-ing-custo" style="font-size:0.8rem;color:var(--text-muted);">R$ 0,00</span>
                 <button type="button" class="js-ing-remove" data-idx="${idx}" style="background:none;border:none;color:var(--danger);cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
@@ -139,7 +134,7 @@ const Precificacao = (() => {
     function resetForm() {
         editingReceitaId = null;
         ingRows = [{ insumoId: '', quantidade: '' }];
-        document.getElementById('f-produto').value = '';
+        Utils.setSelectValue('f-produto', '', 'Sem vínculo (cálculo avulso)');
         document.getElementById('f-rendimento').value = 1;
         document.getElementById('f-margem').value = 150;
         renderIngRows();
@@ -193,7 +188,7 @@ const Precificacao = (() => {
         const r = Store.receitas.find(x => x.id === id);
         if (!r) return;
         editingReceitaId = id;
-        document.getElementById('f-produto').value = r.produtoId || '';
+        Utils.setSelectValue('f-produto', r.produtoId || '', 'Sem vínculo (cálculo avulso)');
         document.getElementById('f-rendimento').value = r.rendimento || 1;
         document.getElementById('f-margem').value = r.margem || 0;
         ingRows = (r.ingredientes || []).map(i => ({ insumoId: i.insumoId, quantidade: i.quantidade }));

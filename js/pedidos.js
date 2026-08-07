@@ -188,10 +188,7 @@ const Pedidos = (() => {
                 <div class="form-row">
                     <div class="form-group">
                         <label>Cliente *</label>
-                        <select id="f-cliente" required>
-                            <option value="">Selecione um cliente...</option>
-                            ${Store.clientes.map(c => `<option value="${c.id}">${Utils.escapeHtml(c.nome)}</option>`).join('')}
-                        </select>
+                        ${Utils.selectHtml({ id: 'f-cliente', placeholder: 'Selecione um cliente...', options: Store.clientes.map(c => ({ value: c.id, label: c.nome })) })}
                     </div>
                     <div class="form-group"><label>Data de entrega</label><input type="date" id="f-data-entrega"></div>
                 </div>
@@ -200,7 +197,7 @@ const Pedidos = (() => {
                 <button type="button" class="btn btn-outline btn-sm" id="btn-add-item" style="margin-bottom:14px;"><i class="fa-solid fa-plus"></i> Adicionar item</button>
                 <div class="form-row">
                     <div class="form-group"><label>Forma de pagamento</label>
-                        <select id="f-pagamento">${(Store.config.formasPagamento || ['Pix', 'Dinheiro', 'Cartão']).map(f => `<option>${Utils.escapeHtml(f)}</option>`).join('')}</select>
+                        ${Utils.selectHtml({ id: 'f-pagamento', value: (Store.config.formasPagamento || ['Pix'])[0], options: (Store.config.formasPagamento || ['Pix', 'Dinheiro', 'Cartão']).map(f => ({ value: f, label: f })) })}
                     </div>
                     <div class="form-group"><label>Taxa de entrega (R$)</label><input type="number" step="0.01" min="0" id="f-taxa" value="${Store.config.taxaEntregaPadrao || 0}"></div>
                 </div>
@@ -231,10 +228,7 @@ const Pedidos = (() => {
         const box = document.getElementById('itens-container');
         box.innerHTML = itemRows.map((row, idx) => `
             <div class="item-picker-row">
-                <select class="js-item-produto" data-idx="${idx}">
-                    <option value="">Selecione o doce...</option>
-                    ${Store.produtos.filter(p => p.ativo !== false).map(p => `<option value="${p.id}" ${p.id === row.produtoId ? 'selected' : ''}>${Utils.escapeHtml(p.nome)}</option>`).join('')}
-                </select>
+                ${Utils.selectHtml({ id: `item-produto-${idx}`, className: 'js-item-produto', dataAttrs: { idx }, value: row.produtoId, placeholder: 'Selecione o doce...', options: Store.produtos.filter(p => p.ativo !== false).map(p => ({ value: p.id, label: p.nome })) })}
                 <input type="number" min="1" class="js-item-qtd" data-idx="${idx}" value="${row.quantidade}" placeholder="Qtd">
                 <span class="js-item-subtotal" style="font-size:0.82rem;color:var(--text-muted);text-align:right;">R$ 0,00</span>
                 <button type="button" class="js-item-remove" data-idx="${idx}" style="background:none;border:none;color:var(--danger);cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>

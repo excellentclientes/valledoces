@@ -15,7 +15,7 @@ const Produtos = (() => {
             </div>
             <div class="toolbar">
                 <div class="search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="produto-search" placeholder="Buscar produto..."></div>
-                <select id="produto-cat-filter"><option value="">Todas categorias</option></select>
+                ${Utils.selectHtml({ id: 'produto-cat-filter', placeholder: 'Todas categorias', options: [] })}
                 <div class="spacer"></div>
                 <span style="font-size:0.8rem;color:var(--text-muted);" id="produto-count"></span>
             </div>
@@ -45,12 +45,8 @@ const Produtos = (() => {
     }
 
     function renderCategoryOptions() {
-        const sel = document.getElementById('produto-cat-filter');
-        if (!sel) return;
         const cats = Store.config.categoriasProdutos || [];
-        const current = sel.value;
-        sel.innerHTML = '<option value="">Todas categorias</option>' + cats.map(c => `<option value="${Utils.escapeHtml(c)}">${Utils.escapeHtml(c)}</option>`).join('');
-        sel.value = current;
+        Utils.refreshSelectOptions('produto-cat-filter', cats.map(c => ({ value: c, label: c })), 'Todas categorias');
     }
 
     function render() {
@@ -99,11 +95,6 @@ const Produtos = (() => {
         }).join('');
     }
 
-    function catOptionsHtml(selected) {
-        const cats = Store.config.categoriasProdutos || [];
-        return cats.map(c => `<option value="${Utils.escapeHtml(c)}" ${c === selected ? 'selected' : ''}>${Utils.escapeHtml(c)}</option>`).join('');
-    }
-
     function openForm(id) {
         const p = id ? Store.produtos.find(x => x.id === id) : null;
         Utils.openModal(`
@@ -111,11 +102,9 @@ const Produtos = (() => {
             <form id="produto-form">
                 <div class="form-group"><label>Nome do doce *</label><input type="text" id="f-nome" required value="${p ? Utils.escapeHtml(p.nome) : ''}" placeholder="Ex: Bombom de Morango"></div>
                 <div class="form-row">
-                    <div class="form-group"><label>Categoria</label><select id="f-categoria"><option value="">Selecione...</option>${catOptionsHtml(p?.categoria)}</select></div>
+                    <div class="form-group"><label>Categoria</label>${Utils.selectHtml({ id: 'f-categoria', placeholder: 'Selecione...', value: p?.categoria || '', options: (Store.config.categoriasProdutos || []).map(c => ({ value: c, label: c })) })}</div>
                     <div class="form-group"><label>Unidade</label>
-                        <select id="f-unidade">
-                            ${['un', 'kg', 'cento', 'caixa', 'pacote'].map(u => `<option value="${u}" ${p?.unidade === u ? 'selected' : ''}>${u}</option>`).join('')}
-                        </select>
+                        ${Utils.selectHtml({ id: 'f-unidade', value: p?.unidade || 'un', options: ['un', 'kg', 'cento', 'caixa', 'pacote'].map(u => ({ value: u, label: u })) })}
                     </div>
                 </div>
                 <div class="form-row">

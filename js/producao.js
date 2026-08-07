@@ -89,10 +89,7 @@ const Producao = (() => {
             <div class="modal-head"><h3>Novo item de produção</h3><button class="modal-close" onclick="Utils.closeModal()"><i class="fa-solid fa-xmark"></i></button></div>
             <form id="producao-form">
                 <div class="form-group"><label>Produto</label>
-                    <select id="f-produto" required>
-                        <option value="">Selecione...</option>
-                        ${Store.produtos.map(p => `<option value="${p.id}">${Utils.escapeHtml(p.nome)}</option>`).join('')}
-                    </select>
+                    ${Utils.selectHtml({ id: 'f-produto', placeholder: 'Selecione...', options: Store.produtos.map(p => ({ value: p.id, label: p.nome })) })}
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Quantidade</label><input type="number" min="1" id="f-qtd" value="1" required></div>

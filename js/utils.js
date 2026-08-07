@@ -113,9 +113,92 @@ const Utils = (() => {
         return `<span class="badge badge-${status}">${label}</span>`;
     }
 
+    /* -------------------------------------------------------------- */
+    /* Select customizado (substitui o <select> nativo em toda a UI)   */
+    /* -------------------------------------------------------------- */
+
+    function selectHtml({ id, className = '', dataAttrs = {}, options = [], value = '', placeholder = 'Selecione...', pill = false }) {
+        const dataStr = Object.entries(dataAttrs).map(([k, v]) => ` data-${k}="${escapeHtml(v)}"`).join('');
+        const selected = options.find(o => String(o.value) === String(value));
+        const label = selected ? selected.label : placeholder;
+        const optsHtml = options.map(o => `<div class="cselect-option ${String(o.value) === String(value) ? 'active' : ''}" data-value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</div>`).join('')
+            || '<div class="cselect-option empty-opt">Nenhuma opção</div>';
+        return `
+        <div class="cselect ${pill ? 'pill' : ''}" data-id="${id}">
+            <input type="hidden" id="${id}" class="${className}"${dataStr} value="${escapeHtml(value ?? '')}">
+            <button type="button" class="cselect-trigger">
+                <span class="cselect-label ${selected ? '' : 'placeholder'}">${escapeHtml(label)}</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+            <div class="cselect-panel">${optsHtml}</div>
+        </div>`;
+    }
+
+    function refreshSelectOptions(id, options = [], placeholder = 'Selecione...') {
+        const wrap = document.querySelector(`.cselect[data-id="${CSS.escape(id)}"]`);
+        const input = document.getElementById(id);
+        if (!wrap || !input) return;
+        const currentValue = input.value;
+        const selected = options.find(o => String(o.value) === String(currentValue));
+        if (!selected) input.value = '';
+        const labelEl = wrap.querySelector('.cselect-label');
+        labelEl.textContent = selected ? selected.label : placeholder;
+        labelEl.classList.toggle('placeholder', !selected);
+        wrap.querySelector('.cselect-panel').innerHTML = options.map(o => `<div class="cselect-option ${selected && String(o.value) === String(currentValue) ? 'active' : ''}" data-value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</div>`).join('')
+            || '<div class="cselect-option empty-opt">Nenhuma opção</div>';
+    }
+
+    function setSelectValue(id, value, placeholder = 'Selecione...') {
+        const input = document.getElementById(id);
+        if (!input) return;
+        input.value = value ?? '';
+        const wrap = document.querySelector(`.cselect[data-id="${CSS.escape(id)}"]`);
+        if (!wrap) return;
+        const optionEl = wrap.querySelector(`.cselect-option[data-value="${CSS.escape(String(value ?? ''))}"]`);
+        const labelEl = wrap.querySelector('.cselect-label');
+        labelEl.textContent = optionEl ? optionEl.textContent : placeholder;
+        labelEl.classList.toggle('placeholder', !optionEl);
+        wrap.querySelectorAll('.cselect-option').forEach(o => o.classList.toggle('active', o === optionEl));
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('click', (e) => {
+            const trigger = e.target.closest('.cselect-trigger');
+            const option = e.target.closest('.cselect-option');
+
+            if (trigger) {
+                const wrap = trigger.closest('.cselect');
+                const willOpen = !wrap.classList.contains('open');
+                document.querySelectorAll('.cselect.open').forEach(w => w.classList.remove('open', 'drop-up'));
+                if (willOpen) {
+                    wrap.classList.add('open');
+                    const rect = wrap.getBoundingClientRect();
+                    if (window.innerHeight - rect.bottom < 240 && rect.top > 240) wrap.classList.add('drop-up');
+                }
+                return;
+            }
+            if (option && !option.classList.contains('empty-opt')) {
+                const wrap = option.closest('.cselect');
+                const input = document.getElementById(wrap.dataset.id) || wrap.querySelector('input[type="hidden"]');
+                wrap.querySelector('.cselect-label').textContent = option.textContent;
+                wrap.querySelector('.cselect-label').classList.remove('placeholder');
+                wrap.querySelectorAll('.cselect-option').forEach(o => o.classList.toggle('active', o === option));
+                input.value = option.dataset.value;
+                wrap.classList.remove('open', 'drop-up');
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                return;
+            }
+            document.querySelectorAll('.cselect.open').forEach(w => w.classList.remove('open', 'drop-up'));
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') document.querySelectorAll('.cselect.open').forEach(w => w.classList.remove('open', 'drop-up'));
+        });
+    });
+
     return {
         formatBRL, formatDateBR, formatDateShort, formatDateTimeBR, todayKey, toDate,
         escapeHtml, debounce, uid, toast, openModal, closeModal, confirmDialog,
-        statusBadge, STATUS_LABELS
+        statusBadge, STATUS_LABELS,
+        selectHtml, refreshSelectOptions, setSelectValue
     };
 })();

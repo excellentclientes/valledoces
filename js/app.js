@@ -5,12 +5,13 @@
 
 const Store = {
     clientes: [], produtos: [], pedidos: [], estoque: [], financeiro: [], producao: [], receitas: [],
+    profile: {},
     config: {
         nomeLoja: 'Vallê Doces',
-        nomeAdmin: 'Andressa',
         categoriasProdutos: ['Bombons', 'Trufas', 'Tortas', 'Doces de Colher', 'Brigadeiros', 'Cento de Docinhos'],
         formasPagamento: ['Pix', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito'],
-        taxaEntregaPadrao: 0
+        taxaEntregaPadrao: 0,
+        usuariosAutorizados: ['andressavalerio@yahoo.com']
     },
     listeners: {},
     on(name, cb) { (this.listeners[name] = this.listeners[name] || []).push(cb); },
@@ -77,6 +78,25 @@ function teardownStoreListeners() {
     Store.financeiro = []; Store.producao = []; Store.receitas = [];
 }
 
+let _profileUnsub = null;
+
+function watchProfile(uid) {
+    if (_profileUnsub) { _profileUnsub(); _profileUnsub = null; }
+    _profileUnsub = window.db.collection('usuarios').doc(uid).onSnapshot(snap => {
+        Store.profile = snap.exists ? snap.data() : {};
+        Store.emit('profile');
+    }, err => console.error('profile', err));
+}
+
+function teardownProfile() {
+    if (_profileUnsub) { _profileUnsub(); _profileUnsub = null; }
+    Store.profile = {};
+}
+
+function isAuthorizedEmail(email, allowList) {
+    return !!email && (allowList || []).map(e => (e || '').toLowerCase()).includes(email.toLowerCase());
+}
+
 /* Gera próximo número sequencial de pedido de forma atômica */
 async function nextPedidoNumero() {
     const ref = window.db.collection('configuracoes').doc('contadores');
@@ -111,10 +131,13 @@ const TITLES = {
 
 let _currentView = 'dashboard';
 
+function greetingName() {
+    return (Store.profile && Store.profile.nome) || Auth.firstName();
+}
+
 function updateGreeting() {
     if (_currentView !== 'dashboard') return;
-    const nome = Store.config.nomeAdmin || Auth.firstName();
-    document.getElementById('topbar-title').textContent = TITLES.dashboard[0].replace('{nome}', nome);
+    document.getElementById('topbar-title').textContent = TITLES.dashboard[0].replace('{nome}', greetingName());
 }
 
 function goToView(name) {
@@ -123,7 +146,7 @@ function goToView(name) {
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === name));
     document.querySelectorAll('.view-section').forEach(el => el.classList.toggle('active', el.id === `view-${name}`));
     const [title, sub] = TITLES[name];
-    document.getElementById('topbar-title').textContent = name === 'dashboard' ? title.replace('{nome}', Store.config.nomeAdmin || Auth.firstName()) : title;
+    document.getElementById('topbar-title').textContent = name === 'dashboard' ? title.replace('{nome}', greetingName()) : title;
     document.getElementById('topbar-sub').textContent = sub;
     document.getElementById('view').scrollTop = 0;
     closeMobileSidebar();
@@ -183,20 +206,24 @@ function bindStoreSubscriptions() {
     Store.on('producao', () => Producao.render());
     Store.on('receitas', () => Precificacao.render());
     Store.on('config', () => { Configuracoes.render(); Pedidos.render(); updateGreeting(); refreshSidebarUser(); });
+    Store.on('profile', () => { updateGreeting(); refreshSidebarUser(); Configuracoes.render(); });
     Store.on('*', () => Relatorios.render());
 }
 
 function refreshSidebarUser() {
-    const nome = Store.config.nomeAdmin || Auth.firstName();
+    const nome = greetingName();
     const email = Auth.currentUser()?.email || '';
+    const foto = Store.profile && Store.profile.fotoUrl;
     const nameEl = document.getElementById('user-name');
     nameEl.textContent = nome;
     nameEl.title = email;
-    document.getElementById('user-avatar').textContent = nome.trim().charAt(0).toUpperCase();
+    const avatarEl = document.getElementById('user-avatar');
+    avatarEl.innerHTML = foto ? `<img src="${foto}" alt="">` : nome.trim().charAt(0).toUpperCase();
 }
 
 function showApp() {
     document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('storefront-screen').style.display = 'none';
     document.getElementById('app-shell').style.display = 'flex';
     refreshSidebarUser();
     goToView('dashboard');
@@ -204,7 +231,15 @@ function showApp() {
 
 function showLogin() {
     document.getElementById('app-shell').style.display = 'none';
+    document.getElementById('storefront-screen').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
+}
+
+function showStorefrontScreen() {
+    document.getElementById('app-shell').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('storefront-screen').style.display = 'block';
+    Storefront.mount();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -214,14 +249,30 @@ document.addEventListener('DOMContentLoaded', () => {
     mountAllModules();
     bindStoreSubscriptions();
 
-    window.auth.onAuthStateChanged(user => {
-        document.getElementById('app-loading').style.display = 'none';
-        if (user) {
-            initStoreListeners();
-            showApp();
-        } else {
+    window.auth.onAuthStateChanged(async user => {
+        if (!user) {
             teardownStoreListeners();
+            teardownProfile();
+            document.getElementById('app-loading').style.display = 'none';
             showLogin();
+            return;
+        }
+
+        let cfgData = {};
+        try {
+            const snap = await window.db.collection('configuracoes').doc('geral').get();
+            if (snap.exists) cfgData = snap.data();
+        } catch (err) { console.error('config check', err); }
+        Store.config = { ...Store.config, ...cfgData };
+
+        document.getElementById('app-loading').style.display = 'none';
+
+        if (isAuthorizedEmail(user.email, Store.config.usuariosAutorizados)) {
+            initStoreListeners();
+            watchProfile(user.uid);
+            Onboarding.start(user, () => showApp());
+        } else {
+            showStorefrontScreen();
         }
     });
 });

@@ -27,7 +27,7 @@ const Financeiro = (() => {
             </div>
             <div class="toolbar">
                 <input type="month" id="fin-month" value="${monthFilter}">
-                <select id="fin-tipo"><option value="">Todos os tipos</option><option value="receita">Receitas</option><option value="despesa">Despesas</option></select>
+                ${Utils.selectHtml({ id: 'fin-tipo', placeholder: 'Todos os tipos', options: [{ value: 'receita', label: 'Receitas' }, { value: 'despesa', label: 'Despesas' }] })}
                 <div class="spacer"></div>
                 <span style="font-size:0.8rem;color:var(--text-muted);" id="fin-count"></span>
             </div>
@@ -128,7 +128,7 @@ const Financeiro = (() => {
             <div class="modal-head"><h3>Nova transação</h3><button class="modal-close" onclick="Utils.closeModal()"><i class="fa-solid fa-xmark"></i></button></div>
             <form id="fin-form">
                 <div class="form-group"><label>Tipo *</label>
-                    <select id="f-tipo" required><option value="despesa">Despesa</option><option value="receita">Receita</option></select>
+                    ${Utils.selectHtml({ id: 'f-tipo', value: 'despesa', options: [{ value: 'despesa', label: 'Despesa' }, { value: 'receita', label: 'Receita' }] })}
                 </div>
                 <div class="form-group"><label>Descrição *</label><input type="text" id="f-desc" required placeholder="Ex: Compra de embalagens"></div>
                 <div class="form-row">
@@ -139,7 +139,7 @@ const Financeiro = (() => {
                 </div>
                 <div class="form-row">
                     <div class="form-group"><label>Forma de pagamento</label>
-                        <select id="f-pagamento">${(Store.config.formasPagamento || ['Pix', 'Dinheiro', 'Cartão']).map(f => `<option>${Utils.escapeHtml(f)}</option>`).join('')}</select>
+                        ${Utils.selectHtml({ id: 'f-pagamento', value: (Store.config.formasPagamento || ['Pix'])[0], options: (Store.config.formasPagamento || ['Pix', 'Dinheiro', 'Cartão']).map(f => ({ value: f, label: f })) })}
                     </div>
                     <div class="form-group"><label>Data *</label><input type="date" id="f-data" required value="${Utils.todayKey()}"></div>
                 </div>
