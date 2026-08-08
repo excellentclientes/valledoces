@@ -150,10 +150,13 @@ function updateGreeting() {
     document.getElementById('topbar-title').textContent = TITLES.dashboard[0].replace('{nome}', greetingName());
 }
 
+const TABBAR_VIEWS = ['dashboard', 'pedidos', 'producao', 'financeiro'];
+
 function goToView(name) {
     if (!VIEWS.includes(name)) return;
     _currentView = name;
     document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.view === name));
+    document.getElementById('tabbar-more').classList.toggle('active', !TABBAR_VIEWS.includes(name));
     document.querySelectorAll('.view-section').forEach(el => el.classList.toggle('active', el.id === `view-${name}`));
     const [title, sub] = TITLES[name];
     document.getElementById('topbar-title').textContent = name === 'dashboard' ? title.replace('{nome}', greetingName()) : title;
@@ -167,15 +170,22 @@ function closeMobileSidebar() {
     document.getElementById('sidebar-backdrop').classList.remove('open');
 }
 
+function openMobileSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-backdrop').classList.add('open');
+}
+
 function bindNav() {
     document.getElementById('nav-links').addEventListener('click', (e) => {
         const item = e.target.closest('.nav-item');
         if (item) goToView(item.dataset.view);
     });
-    document.getElementById('mobile-toggle').addEventListener('click', () => {
-        document.getElementById('sidebar').classList.add('open');
-        document.getElementById('sidebar-backdrop').classList.add('open');
+    document.getElementById('mobile-tabbar').addEventListener('click', (e) => {
+        if (e.target.closest('#tabbar-more')) { openMobileSidebar(); return; }
+        const item = e.target.closest('.nav-item');
+        if (item) goToView(item.dataset.view);
     });
+    document.getElementById('mobile-toggle').addEventListener('click', openMobileSidebar);
     document.getElementById('sidebar-backdrop').addEventListener('click', closeMobileSidebar);
     document.getElementById('btn-view-store').addEventListener('click', () => Storefront.openAdminPreview());
 
